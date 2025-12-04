@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "formiq-monorepo",
   "private": true,
   "workspaces": [
@@ -10,7 +11,13 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
-    "lint": "echo 'Add lint command here'",
-    "test": "echo 'Add test command here'"
+    "lint": "eslint .",
+    "test": "echo 'Add test command here'",
+    "db:migrate": "yarn prisma migrate dev --name"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.48.1",
+    "@typescript-eslint/parser": "^8.48.1",
+    "eslint": "^9.39.1"
   }
 }
