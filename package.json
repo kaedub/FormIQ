@@ -1,0 +1,16 @@
+{
+  "name": "formiq-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/api",
+    "packages/infra",
+    "packages/temporal/workflows",
+    "packages/temporal/activities"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "tsc -b --clean",
+    "lint": "echo 'Add lint command here'",
+    "test": "echo 'Add test command here'"
+  }
+}

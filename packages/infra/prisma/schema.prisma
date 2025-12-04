@@ -1,0 +1,65 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum TaskStatus {
+  locked
+  unlocked
+  completed
+}
+
+model StoryContext {
+  id    String @id @default(uuid())
+  story Story?
+}
+
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  stories  Story[]
+}
+
+model Story {
+  id        String @id @default(uuid())
+  userId    String
+  contextid String @unique
+
+  user    User         @relation(fields: [userId], references: [id])
+  context StoryContext @relation(fields: [contextid], references: [id])
+
+  chapters StoryChapter[]
+}
+
+model StoryChapter {
+  id       String      @id @default(uuid())
+  title    String
+  body     String
+  position Int
+  storyId  String
+  story    Story       @relation(fields: [storyId], references: [id])
+  tasks    StoryTask[]
+}
+
+model StoryTask {
+  id        String     @id @default(uuid())
+  chapterId String
+  title     String
+  objective String
+  body      String
+  status    TaskStatus
+
+  storyChapter   StoryChapter? @relation(fields: [storyChapterId], references: [id])
+  storyChapterId String?
+}

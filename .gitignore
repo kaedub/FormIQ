@@ -1,0 +1,33 @@
+
+# Node modules
+node_modules/
+packages/*/node_modules/
+
+# Build output
+dist/
+packages/*/dist/
+*.tsbuildinfo
+packages/*/*.tsbuildinfo
+
+# Environment files
+.env
+packages/*/.env
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS/Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.history/
+
+# Misc
+*.lock
+*.swp
+*.swo
+*.tmp
