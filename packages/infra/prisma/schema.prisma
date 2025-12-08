@@ -13,15 +13,22 @@ datasource db {
   provider = "postgresql"
 }
 
-enum TaskStatus {
+enum StepStatus {
   locked
   unlocked
   completed
 }
 
-model StoryContext {
-  id    String @id @default(uuid())
-  story Story?
+enum QuestionType {
+  multi
+  select
+  text
+}
+
+enum StoryStatus {
+  draft
+  processing
+  active
 }
 
 model User {
@@ -31,35 +38,49 @@ model User {
   stories  Story[]
 }
 
-model Story {
-  id        String @id @default(uuid())
-  userId    String
-  contextid String @unique
-
-  user    User         @relation(fields: [userId], references: [id])
-  context StoryContext @relation(fields: [contextid], references: [id])
-
-  chapters StoryChapter[]
+model Detail {
+  id           String       @id @default(uuid())
+  storyId      String       @unique
+  question     String
+  answer       String?
+  options      Json[]
+  questionType QuestionType
+  story        Story        @relation(fields: [storyId], references: [id], onDelete: Cascade)
 }
 
-model StoryChapter {
-  id       String      @id @default(uuid())
+model Story {
+  id       String    @id @default(uuid())
+  userId   String
+  title    String
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  details  Detail[]
+  chapters Chapter[]
+}
+
+model Chapter {
+  id       String @id @default(uuid())
   title    String
   body     String
   position Int
   storyId  String
-  story    Story       @relation(fields: [storyId], references: [id])
-  tasks    StoryTask[]
+  story    Story  @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  steps    Step[]
 }
 
-model StoryTask {
+model Step {
   id        String     @id @default(uuid())
   chapterId String
   title     String
   objective String
   body      String
-  status    TaskStatus
+  position  Int
+  status    StepStatus
+  chapter   Chapter    @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+}
 
-  storyChapter   StoryChapter? @relation(fields: [storyChapterId], references: [id])
-  storyChapterId String?
+model PromptTemplate {
+  id     String @id @default(uuid())
+  title  String
+  text   String
+  schema Json?
 }

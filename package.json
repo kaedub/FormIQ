@@ -1,6 +1,6 @@
 {
   "type": "module",
-  "name": "formiq-monorepo",
+  "name": "formiq",
   "private": true,
   "workspaces": [
     "packages/api",
@@ -13,11 +13,17 @@
     "clean": "tsc -b --clean",
     "lint": "eslint .",
     "test": "echo 'Add test command here'",
-    "db:migrate": "yarn prisma migrate dev --name"
+    "db:migrate": "yarn prisma migrate dev --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts --name",
+    "db:generate": "yarn prisma generate --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
+    "db:studio": "yarn prisma studio --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
+    "db:push": "yarn prisma db push --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
+    "db:wipe": "yarn prisma db wipe --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts --force"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
-    "eslint": "^9.39.1"
+    "eslint": "^9.39.1",
+    "nx": "22.1.3",
+    "@nx/eslint": "22.1.3"
   }
 }
