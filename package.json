@@ -3,8 +3,9 @@
   "name": "formiq",
   "private": true,
   "workspaces": [
-    "packages/api",
-    "packages/infra",
+    "apps/*",
+    "packages/platform",
+    "packages/shared",
     "packages/temporal/workflows",
     "packages/temporal/activities"
   ],
@@ -13,17 +14,52 @@
     "clean": "tsc -b --clean",
     "lint": "eslint .",
     "test": "echo 'Add test command here'",
-    "db:migrate": "yarn prisma migrate dev --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts --name",
-    "db:generate": "yarn prisma generate --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
-    "db:studio": "yarn prisma studio --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
-    "db:push": "yarn prisma db push --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts",
-    "db:wipe": "yarn prisma db wipe --schema=packages/infra/prisma/schema.prisma --config=packages/infra/prisma.config.ts --force"
+    "prisma": "yarn workspace @formiq/platform prisma",
+    "db:generate": "yarn prisma generate",
+    "db:reset": "yarn prisma migrate reset",
+    "db:studio": "yarn prisma studio",
+    "db:push": "yarn prisma db push",
+    "db:wipe": "yarn prisma db wipe --force",
+    "db:migrate": "yarn prisma migrate dev --name"
   },
   "devDependencies": {
+    "@nx/eslint": "22.3.3",
+    "@nx/js": "22.3.3",
+    "@nx/react": "22.3.3",
+    "@nx/vite": "22.3.3",
+    "@nx/vitest": "22.3.3",
+    "@nx/web": "22.3.3",
+    "@swc-node/register": "~1.9.1",
+    "@swc/cli": "~0.6.0",
+    "@swc/core": "~1.5.7",
+    "@swc/helpers": "~0.5.11",
+    "@testing-library/dom": "10.4.0",
+    "@testing-library/react": "16.3.0",
+    "@types/node": "20.19.9",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
     "@typescript-eslint/eslint-plugin": "^8.48.1",
     "@typescript-eslint/parser": "^8.48.1",
+    "@vitejs/plugin-react": "^4.2.0",
+    "@vitest/coverage-v8": "^4.0.0",
+    "@vitest/ui": "^4.0.0",
     "eslint": "^9.39.1",
-    "nx": "22.1.3",
-    "@nx/eslint": "22.1.3"
-  }
+    "eslint-plugin-import": "2.31.0",
+    "eslint-plugin-jsx-a11y": "6.10.1",
+    "eslint-plugin-react": "7.35.0",
+    "eslint-plugin-react-hooks": "5.0.0",
+    "jiti": "2.4.2",
+    "jsdom": "~22.1.0",
+    "nx": "22.3.3",
+    "prettier": "~3.6.2",
+    "typescript": "~5.9.2",
+    "vite": "^7.0.0",
+    "vitest": "^4.0.0"
+  },
+  "dependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "react-router-dom": "6.29.0"
+  },
+  "packageManager": "yarn@4.12.0"
 }

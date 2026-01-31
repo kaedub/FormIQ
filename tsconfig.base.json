@@ -1,0 +1,11 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "sourceMap": true,
+    "declaration": true,
+    "moduleResolution": "bundler",
+    "target": "ES2023",
+    "skipLibCheck": true,
+    "baseUrl": "."
+  }
+}

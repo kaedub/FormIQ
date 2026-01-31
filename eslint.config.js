@@ -19,6 +19,12 @@ export default [
     },
   },
   {
-    ignores: ['node_modules/', 'dist/', '*.js'],
+    ignores: [
+      'node_modules/',
+      'dist/',
+      '*.js',
+      '**/vite.config.*.timestamp*',
+      '**/vitest.config.*.timestamp*',
+    ],
   },
 ];

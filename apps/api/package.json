@@ -1,0 +1,22 @@
+{
+  "name": "@formiq/api",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc -b",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@formiq/platform": "workspace:*",
+    "@formiq/shared": "workspace:*",
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "typescript": "^5.9.3"
+  }
+}

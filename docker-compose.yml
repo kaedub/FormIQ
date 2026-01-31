@@ -1,0 +1,48 @@
+version: '3.9'
+
+services:
+  db:
+    image: postgres:18
+    container_name: formiq-db
+    environment:
+      POSTGRES_USER: formiq
+      POSTGRES_PASSWORD: formiq
+      POSTGRES_DB: formiq
+    ports:
+      - '5432:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+
+  api:
+    image: node:25
+    container_name: formiq-api
+    working_dir: /workspace
+    command: >
+      bash -c "yarn install && yarn nx run api:build && node apps/api/dist/index.js"
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/formiq
+      PORT: 3001
+    ports:
+      - '3001:3001'
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - db
+
+  web:
+    image: node:25
+    container_name: formiq-web
+    working_dir: /workspace
+    command: >
+      bash -c "yarn install && yarn vite --config apps/web/vite.config.mts --host 0.0.0.0 --port 4200"
+    environment:
+      VITE_API_URL: http://localhost:3001
+    ports:
+      - '4200:4200'
+    volumes:
+      - ./:/workspace
+    depends_on:
+      - api
+
+volumes:
+  db-data:

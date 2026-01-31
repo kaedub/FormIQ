@@ -1,8 +1,20 @@
 {
-  "name": "shared",
+  "name": "@formiq/shared",
   "version": "1.0.0",
-  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
   "license": "MIT",
+  "scripts": {
+    "build": "tsc -b"
+  },
   "devDependencies": {
     "typescript": "^5.9.3"
   }
