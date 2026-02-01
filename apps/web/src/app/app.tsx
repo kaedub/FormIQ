@@ -1,23 +1,23 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from './app.module.css';
-import { IntakeDetailInput, IntakeRequest, StoryResponse } from '@formiq/shared';
+import { IntakeRequest, QuestionResponseInput, StoryResponse } from '@formiq/shared';
 
-const FALLBACK_QUESTIONS: IntakeDetailInput[] = [
+const FALLBACK_QUESTIONS: QuestionResponseInput[] = [
   {
     question: 'What is the goal you want to achieve?',
-    questionType: 'text',
+    questionType: 'free_text',
   },
   {
     question: 'What constraints or deadlines do you have?',
-    questionType: 'text',
+    questionType: 'free_text',
   },
   {
     question: 'How will you measure success?',
-    questionType: 'text',
+    questionType: 'free_text',
   },
   {
     question: 'Which resources or tools do you prefer?',
-    questionType: 'multi',
+    questionType: 'multi_select',
     options: ['AI tooling', 'Design tools', 'Code editors', 'Automation', 'No-code'],
   },
 ];
@@ -27,7 +27,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 type AnswerState = Record<number, string | string[]>;
 
 export function App() {
-  const [questions, setQuestions] = useState<IntakeDetailInput[]>([]);
+  const [questions, setQuestions] = useState<QuestionResponseInput[]>([]);
   const [answers, setAnswers] = useState<AnswerState>({});
   const [email, setEmail] = useState('');
   const [title, setTitle] = useState('');
@@ -52,7 +52,7 @@ export function App() {
     loadQuestions();
   }, []);
 
-  const detailPayload: IntakeDetailInput[] = useMemo(
+  const responsePayload: QuestionResponseInput[] = useMemo(
     () =>
       questions.map((question, index) => {
         const answer = answers[index];
@@ -84,7 +84,7 @@ export function App() {
     const payload: IntakeRequest = {
       email,
       title,
-      details: detailPayload,
+      responses: responsePayload,
     };
 
     try {
@@ -161,7 +161,7 @@ export function App() {
             {questions.map((question, index) => (
               <div key={question.question} className={styles.questionCard}>
                 <p className={styles.questionText}>{question.question}</p>
-                {question.questionType === 'multi' ? (
+                {question.questionType === 'multi_select' ? (
                   <div className={styles.options}>
                     {(question.options ?? []).map((option) => {
                       const selected = Array.isArray(answers[index])
@@ -211,13 +211,13 @@ export function App() {
           <h2>Saved story</h2>
           <p className={styles.storyTitle}>{story.title}</p>
           <p className={styles.storyMeta}>
-            Status: {story.status} · Details captured: {story.details.length}
+            Status: {story.status} · Responses captured: {story.responses.length}
           </p>
           <ul className={styles.detailList}>
-            {story.details.map((detail) => (
-              <li key={detail.id}>
-                <strong>{detail.question}</strong>
-                <div>{detail.answer || 'No answer yet'}</div>
+            {story.responses.map((response) => (
+              <li key={response.id}>
+                <strong>{response.question}</strong>
+                <div>{response.answer || 'No answer yet'}</div>
               </li>
             ))}
           </ul>

@@ -1,11 +1,14 @@
--- CreateEnum
-CREATE TYPE "StepStatus" AS ENUM ('locked', 'unlocked', 'completed');
+-- CreateSchema
+CREATE SCHEMA IF NOT EXISTS "public";
 
 -- CreateEnum
-CREATE TYPE "QuestionType" AS ENUM ('multi', 'select', 'text');
+CREATE TYPE "TaskStatus" AS ENUM ('locked', 'unlocked', 'completed');
 
 -- CreateEnum
-CREATE TYPE "StoryStatus" AS ENUM ('draft', 'processing', 'active');
+CREATE TYPE "QuestionType" AS ENUM ('multi_select', 'single_select', 'free_text');
+
+-- CreateEnum
+CREATE TYPE "StoryStatus" AS ENUM ('draft', 'generating', 'ready');
 
 -- CreateTable
 CREATE TABLE "User" (
@@ -17,7 +20,7 @@ CREATE TABLE "User" (
 );
 
 -- CreateTable
-CREATE TABLE "Detail" (
+CREATE TABLE "QuestionResponse" (
     "id" TEXT NOT NULL,
     "storyId" TEXT NOT NULL,
     "question" TEXT NOT NULL,
@@ -25,7 +28,7 @@ CREATE TABLE "Detail" (
     "options" JSONB[],
     "questionType" "QuestionType" NOT NULL,
 
-    CONSTRAINT "Detail_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "QuestionResponse_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -49,23 +52,22 @@ CREATE TABLE "Chapter" (
 );
 
 -- CreateTable
-CREATE TABLE "Step" (
+CREATE TABLE "Task" (
     "id" TEXT NOT NULL,
     "chapterId" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "objective" TEXT NOT NULL,
-    "body" TEXT NOT NULL,
+    "description" TEXT NOT NULL,
     "position" INTEGER NOT NULL,
-    "status" "StepStatus" NOT NULL,
+    "status" "TaskStatus" NOT NULL,
 
-    CONSTRAINT "Step_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "Task_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
 CREATE TABLE "PromptTemplate" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
-    "text" TEXT NOT NULL,
+    "prompt" TEXT NOT NULL,
     "schema" JSONB,
 
     CONSTRAINT "PromptTemplate_pkey" PRIMARY KEY ("id")
@@ -74,11 +76,8 @@ CREATE TABLE "PromptTemplate" (
 -- CreateIndex
 CREATE UNIQUE INDEX "User_email_key" ON "User"("email");
 
--- CreateIndex
-CREATE UNIQUE INDEX "Detail_storyId_key" ON "Detail"("storyId");
-
 -- AddForeignKey
-ALTER TABLE "Detail" ADD CONSTRAINT "Detail_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "Story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "QuestionResponse" ADD CONSTRAINT "QuestionResponse_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "Story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "Story" ADD CONSTRAINT "Story_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -87,4 +86,4 @@ ALTER TABLE "Story" ADD CONSTRAINT "Story_userId_fkey" FOREIGN KEY ("userId") RE
 ALTER TABLE "Chapter" ADD CONSTRAINT "Chapter_storyId_fkey" FOREIGN KEY ("storyId") REFERENCES "Story"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Step" ADD CONSTRAINT "Step_chapterId_fkey" FOREIGN KEY ("chapterId") REFERENCES "Chapter"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "Task" ADD CONSTRAINT "Task_chapterId_fkey" FOREIGN KEY ("chapterId") REFERENCES "Chapter"("id") ON DELETE CASCADE ON UPDATE CASCADE;

@@ -1,6 +1,6 @@
-export type QuestionType = 'multi' | 'select' | 'text';
+export type QuestionType = 'multi_select' | 'single_select' | 'free_text';
 
-export interface IntakeDetailInput {
+export interface QuestionResponseInput {
   question: string;
   answer?: string;
   options?: string[];
@@ -10,14 +10,14 @@ export interface IntakeDetailInput {
 export interface IntakeRequest {
   email: string;
   title: string;
-  details: IntakeDetailInput[];
+  responses: QuestionResponseInput[];
 }
 
-export type StoryStatus = 'draft' | 'processing' | 'active';
+export type StoryStatus = 'draft' | 'generating' | 'ready';
 
-export type StepStatus = 'locked' | 'unlocked' | 'completed';
+export type TaskStatus = 'locked' | 'unlocked' | 'completed';
 
-export interface DetailResponse extends IntakeDetailInput {
+export interface QuestionResponse extends QuestionResponseInput {
   id: string;
   storyId: string;
 }
@@ -26,5 +26,5 @@ export interface StoryResponse {
   id: string;
   title: string;
   status: StoryStatus;
-  details: DetailResponse[];
+  responses: QuestionResponse[];
 }
