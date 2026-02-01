@@ -1,24 +1,35 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from './app.module.css';
-import { IntakeRequest, QuestionResponseInput, StoryResponse } from '@formiq/shared';
+import { IntakeQuestionDto, IntakeRequest, QuestionResponseInput, StoryResponse } from '@formiq/shared';
 
-const FALLBACK_QUESTIONS: QuestionResponseInput[] = [
+const FALLBACK_QUESTIONS: IntakeQuestionDto[] = [
   {
-    question: 'What is the goal you want to achieve?',
+    id: 'question_goal',
+    prompt: 'What is the goal you want to achieve?',
     questionType: 'free_text',
+    options: [],
+    position: 0,
   },
   {
-    question: 'What constraints or deadlines do you have?',
+    id: 'question_constraints',
+    prompt: 'What constraints or deadlines do you have?',
     questionType: 'free_text',
+    options: [],
+    position: 1,
   },
   {
-    question: 'How will you measure success?',
+    id: 'question_success',
+    prompt: 'How will you measure success?',
     questionType: 'free_text',
+    options: [],
+    position: 2,
   },
   {
-    question: 'Which resources or tools do you prefer?',
+    id: 'question_resources',
+    prompt: 'Which resources or tools do you prefer?',
     questionType: 'multi_select',
     options: ['AI tooling', 'Design tools', 'Code editors', 'Automation', 'No-code'],
+    position: 3,
   },
 ];
 
@@ -27,7 +38,7 @@ const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 type AnswerState = Record<number, string | string[]>;
 
 export function App() {
-  const [questions, setQuestions] = useState<QuestionResponseInput[]>([]);
+  const [questions, setQuestions] = useState<IntakeQuestionDto[]>([]);
   const [answers, setAnswers] = useState<AnswerState>({});
   const [email, setEmail] = useState('');
   const [title, setTitle] = useState('');
@@ -56,14 +67,12 @@ export function App() {
     () =>
       questions.map((question, index) => {
         const answer = answers[index];
-        const normalized =
-          Array.isArray(answer) && answer.length > 0
-            ? answer.join(', ')
-            : (answer as string | undefined);
-
         return {
-          ...question,
-          answer: normalized,
+          questionId: question.id,
+          answer:
+            question.questionType === 'multi_select'
+              ? ((Array.isArray(answer) ? answer : []).filter(Boolean) as string[])
+              : ((answer as string) ?? ''),
         };
       }),
     [answers, questions],
@@ -159,11 +168,11 @@ export function App() {
 
           <div className={styles.questions}>
             {questions.map((question, index) => (
-              <div key={question.question} className={styles.questionCard}>
-                <p className={styles.questionText}>{question.question}</p>
+              <div key={question.id} className={styles.questionCard}>
+                <p className={styles.questionText}>{question.prompt}</p>
                 {question.questionType === 'multi_select' ? (
                   <div className={styles.options}>
-                    {(question.options ?? []).map((option) => {
+                    {question.options.map((option) => {
                       const selected = Array.isArray(answers[index])
                         ? (answers[index] as string[]).includes(option)
                         : false;
@@ -215,9 +224,13 @@ export function App() {
           </p>
           <ul className={styles.detailList}>
             {story.responses.map((response) => (
-              <li key={response.id}>
-                <strong>{response.question}</strong>
-                <div>{response.answer || 'No answer yet'}</div>
+              <li key={response.answer.questionId}>
+                <strong>{response.question.prompt}</strong>
+                <div>
+                  {Array.isArray(response.answer.answer)
+                    ? response.answer.answer.join(', ')
+                    : response.answer.answer || 'No answer yet'}
+                </div>
               </li>
             ))}
           </ul>

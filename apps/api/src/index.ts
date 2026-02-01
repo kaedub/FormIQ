@@ -1,28 +1,39 @@
 import cors from 'cors';
 import express from 'express';
-import type { QuestionResponseInput } from '@formiq/shared';
+import type { IntakeQuestionDto } from '@formiq/shared';
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-const questions: QuestionResponseInput[] = [
+const questions: IntakeQuestionDto[] = [
   {
-    question: 'What is the goal you want to achieve?',
+    id: 'question_goal',
+    prompt: 'What is the goal you want to achieve?',
     questionType: 'free_text',
+    options: [],
+    position: 0,
   },
   {
-    question: 'What constraints or deadlines do you have?',
+    id: 'question_constraints',
+    prompt: 'What constraints or deadlines do you have?',
     questionType: 'free_text',
+    options: [],
+    position: 1,
   },
   {
-    question: 'How will you measure success?',
+    id: 'question_success',
+    prompt: 'How will you measure success?',
     questionType: 'free_text',
+    options: [],
+    position: 2,
   },
   {
-    question: 'Which resources or tools do you prefer?',
+    id: 'question_resources',
+    prompt: 'Which resources or tools do you prefer?',
     questionType: 'multi_select',
     options: ['AI tooling', 'Design tools', 'Code editors', 'Automation', 'No-code'],
+    position: 3,
   },
 ];
 

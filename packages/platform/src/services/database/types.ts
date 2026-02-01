@@ -1,17 +1,18 @@
 import type { PrismaClient } from '@prisma/client';
-
-export type RequestContext = {
-  userId?: string;
-  storyId?: string;
-  correlationId?: string;
-};
+import type {
+  CreateStoryInput,
+  StoryContextDto,
+  StoryDto,
+  StorySummaryDto,
+} from '@formiq/shared';
 
 export type DatabaseServiceDependencies = {
-  prisma: PrismaClient;
+  db: PrismaClient;
 };
 
-export type getStoriesByUserIdResponse = { id: string; title: string }[];
-
 export interface DatabaseService {
-  getStoriesByUserId (userId: string): Promise<getStoriesByUserIdResponse>;
+  createStory(input: CreateStoryInput): Promise<StoryDto>;
+  getStoryById(storyId: string, userId: string): Promise<StoryDto | null>;
+  getStoryContext(storyId: string, userId: string): Promise<StoryContextDto>;
+  getStoriesByUserId(userId: string): Promise<StorySummaryDto[]>;
 }
