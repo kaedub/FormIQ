@@ -29,7 +29,13 @@ Thumbs.db
 .history/
 
 # Misc
-*.lock
+.yarn/cache
+.yarn/unplugged
+.yarn/build-state.yml
+.yarn/install-state.gz
+
+# Lockfiles
+!yarn.lock
 *.swp
 *.swo
 *.tmp

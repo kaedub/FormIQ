@@ -11,3 +11,11 @@
 - If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
 
 <!-- nx configuration end-->
+
+# Additional Agent Rules
+
+- Follow strict TypeScript practices; for Temporal, keep workflows deterministic and avoid importing activities directly.
+- Always outline a plan before proposing changes and review it against the request and app context; do not edit code or run mutating commands without user approval.
+- Do not assume external versions or defaults; keep responses concise and relevant.
+- Provide commands (lint/build/test/install/docker/etc.) instead of running them; only run basic read-only commands for context.
+- Avoid obscure workarounds or creating extra artifacts (tmp folders, new tools) without explaining and getting approval; consult docs before introducing new tools.

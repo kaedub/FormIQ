@@ -16,6 +16,12 @@
         "command": "node apps/api/dist/index.js"
       },
       "dependsOn": ["build"]
+    },
+    "lint": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn eslint apps/api/src --ext .ts"
+      }
     }
   }
 }

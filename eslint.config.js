@@ -20,9 +20,9 @@ export default [
   },
   {
     ignores: [
+      '.yarn/',
       'node_modules/',
       'dist/',
-      '*.js',
       '**/vite.config.*.timestamp*',
       '**/vitest.config.*.timestamp*',
     ],

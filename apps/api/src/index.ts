@@ -1,10 +1,7 @@
 import cors from 'cors';
 import express from 'express';
-import { prisma } from '@formiq/platform';
 import type {
   IntakeDetailInput,
-  IntakeRequest,
-  StoryResponse,
 } from '@formiq/shared';
 
 const app = express();
