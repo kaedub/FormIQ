@@ -80,12 +80,7 @@ class PrismaDatabaseService implements DatabaseService {
       },
     })) as StoryWithResponses | null;
 
-    if (!story) {
-      throw new Error(`Story ${storyId} not found for user ${userId}`);
-    }
-
-
-    return mapStoryDto(story);
+    return story ? mapStoryDto(story) : null;
   }
 
   async getStoryContext(

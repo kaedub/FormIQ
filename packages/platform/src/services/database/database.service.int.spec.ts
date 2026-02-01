@@ -1,0 +1,162 @@
+import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { PrismaClient } from '@prisma/client';
+import { createDatabaseService } from './service.js';
+import type { DatabaseService } from './types.js';
+import {
+  buildStoryInput,
+  createTestUser,
+  QUESTION_FIXTURES,
+  resetDatabase,
+  seedIntakeQuestions,
+} from '../../test/fixtures.js';
+import { getPrismaClient } from '../../clients/prisma-client.js';
+
+describe('PrismaDatabaseService integration', () => {
+  let prisma: PrismaClient;
+  let service: DatabaseService;
+
+  beforeAll(async () => {
+    prisma = getPrismaClient();
+    service = createDatabaseService({ db: prisma });
+    await seedIntakeQuestions(prisma);
+  });
+
+  afterAll(async () => {
+    await prisma.$disconnect();
+  });
+
+  beforeEach(async () => {
+    await resetDatabase(prisma);
+  });
+
+  it('creates a story with ordered answers', async () => {
+    const user = await createTestUser(prisma);
+    const input = buildStoryInput(user.id);
+
+    const result = await service.createStory(input);
+
+    expect(result.title).toBe(input.title);
+    expect(result.responses).toHaveLength(QUESTION_FIXTURES.length);
+    result.responses.forEach((response, index) => {
+      expect(response.question.id).toBe(QUESTION_FIXTURES[index]!.id);
+      if (QUESTION_FIXTURES[index]!.questionType === 'multi_select') {
+        expect(response.answer.answer).toEqual([QUESTION_FIXTURES[index]!.options[0]]);
+      } else {
+        expect(response.answer.answer).toBe(`Answer ${index + 1}`);
+      }
+    });
+
+    const storedAnswers = await prisma.questionAnswer.findMany({
+      where: { storyId: result.id },
+    });
+    expect(storedAnswers).toHaveLength(QUESTION_FIXTURES.length);
+  });
+
+  it('fails to create a story when question id is invalid', async () => {
+    const user = await createTestUser(prisma);
+    const input = buildStoryInput(user.id);
+    input.responses[0]!.questionId = 'missing';
+
+    await expect(service.createStory(input)).rejects.toThrow();
+  });
+
+  it('fetches a story by id for the owning user', async () => {
+    const user = await createTestUser(prisma);
+    const created = await service.createStory(buildStoryInput(user.id));
+
+    const fetched = await service.getStoryById(created.id, user.id);
+
+    expect(fetched).not.toBeNull();
+    expect(fetched?.id).toBe(created.id);
+    expect(fetched?.responses.length).toBe(QUESTION_FIXTURES.length);
+  });
+
+  it('returns null when fetching a story owned by another user', async () => {
+    const owner = await createTestUser(prisma);
+    const intruder = await createTestUser(prisma);
+    const created = await service.createStory(buildStoryInput(owner.id));
+
+    const fetched = await service.getStoryById(created.id, intruder.id);
+
+    expect(fetched).toBeNull();
+  });
+
+  it('returns story context with chapters, tasks, prompt executions, and events', async () => {
+    const user = await createTestUser(prisma);
+    const story = await service.createStory(buildStoryInput(user.id));
+
+    const chapter = await prisma.chapter.create({
+      data: {
+        storyId: story.id,
+        title: 'Chapter 1',
+        summary: 'Summary',
+        position: 0,
+        status: 'locked',
+      },
+    });
+
+    await prisma.task.create({
+      data: {
+        chapterId: chapter.id,
+        title: 'Task 1',
+        description: 'Do something',
+        position: 0,
+        status: 'locked',
+      },
+    });
+
+    await prisma.promptExecution.create({
+      data: {
+        storyId: story.id,
+        chapterId: chapter.id,
+        stage: 'story_context',
+        status: 'success',
+        input: { source: 'test' },
+      },
+    });
+
+    await prisma.storyEvent.create({
+      data: {
+        storyId: story.id,
+        eventType: 'status_change',
+        payload: { to: 'generating' },
+      },
+    });
+
+    const context = await service.getStoryContext(story.id, user.id);
+
+    expect(context.story.id).toBe(story.id);
+    expect(context.chapters).toHaveLength(1);
+    expect(context.tasks).toHaveLength(1);
+    expect(context.promptExecutions).toHaveLength(1);
+    expect(context.events).toHaveLength(1);
+  });
+
+  it('throws when requesting context for a missing story', async () => {
+    const user = await createTestUser(prisma);
+
+    await expect(
+      service.getStoryContext('missing-story', user.id),
+    ).rejects.toThrow(/not found/i);
+  });
+
+  it('lists stories for a given user', async () => {
+    const owner = await createTestUser(prisma);
+    const other = await createTestUser(prisma);
+    await service.createStory(buildStoryInput(owner.id));
+    await service.createStory(buildStoryInput(owner.id));
+    await service.createStory(buildStoryInput(other.id));
+
+    const stories = await service.getStoriesByUserId(owner.id);
+
+    expect(stories).toHaveLength(2);
+    stories.forEach((story) => {
+      expect(story).toEqual(
+        expect.objectContaining({
+          id: expect.any(String),
+          title: expect.any(String),
+        }),
+      );
+    });
+  });
+});

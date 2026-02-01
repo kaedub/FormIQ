@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: formiq
+      POSTGRES_PASSWORD: formiq
+      POSTGRES_DB: formiq_test
+    ports:
+      - '5433:5432'
+    healthcheck:
+      test: ['CMD', 'pg_isready', '-U', 'formiq']
+      interval: 5s
+      timeout: 5s
+      retries: 5
