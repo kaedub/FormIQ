@@ -12,6 +12,7 @@
   "scripts": {
     "build": "tsc -b",
     "clean": "tsc -b --clean",
+    "format": "prettier . --write",
     "lint": "eslint .",
     "test": "echo 'Add test command here'",
     "prisma": "yarn workspace @formiq/platform prisma",
@@ -19,6 +20,7 @@
     "db:reset": "yarn prisma migrate reset",
     "db:studio": "yarn prisma studio",
     "db:push": "yarn prisma db push",
+    "db:seed": "yarn prisma db seed",
     "db:wipe": "yarn prisma db wipe --force",
     "db:migrate": "yarn prisma migrate dev --name"
   },
@@ -51,7 +53,8 @@
     "jiti": "2.4.2",
     "jsdom": "~22.1.0",
     "nx": "22.3.3",
-    "prettier": "~3.6.2",
+    "prettier": "^3.8.1",
+    "tsx": "^4.21.0",
     "typescript": "~5.9.2",
     "vite": "^7.0.0",
     "vitest": "^4.0.0"

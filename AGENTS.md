@@ -15,6 +15,8 @@
 # Additional Agent Rules
 
 - Follow strict TypeScript practices; for Temporal, keep workflows deterministic and avoid importing activities directly.
+- Never use any and resort to good typing
+- Never use "magic strings" to handle undefined or null values.
 - Always outline a plan before proposing changes and review it against the request and app context; do not edit code or run mutating commands without user approval.
 - Do not assume external versions or defaults; keep responses concise and relevant.
 - Provide commands (lint/build/test/install/docker/etc.) instead of running them; only run basic read-only commands for context.

@@ -32,7 +32,13 @@ const questions: IntakeQuestionDto[] = [
     id: 'question_resources',
     prompt: 'Which resources or tools do you prefer?',
     questionType: 'multi_select',
-    options: ['AI tooling', 'Design tools', 'Code editors', 'Automation', 'No-code'],
+    options: [
+      'AI tooling',
+      'Design tools',
+      'Code editors',
+      'Automation',
+      'No-code',
+    ],
     position: 3,
   },
 ];

@@ -1,20 +1,21 @@
 import type { PrismaClient } from '@prisma/client';
-import type {
-  DatabaseService,
-  DatabaseServiceDependencies,
-} from './types.js';
+import type { DatabaseService, DatabaseServiceDependencies } from './types.js';
 import type {
   CreateStoryInput,
+  IntakeFormDto,
+  IntakeFormQuestions,
   StoryContextDto,
   StoryDto,
   StorySummaryDto,
 } from '@formiq/shared';
-import type {  
+import type {
+  IntakeFormWithQuestions,
   StoryWithContext,
   StoryWithResponses,
 } from './mappers.js';
 import {
   mapChapterDto,
+  mapIntakeFormDto,
   mapPromptExecutionDto,
   mapStoryDto,
   mapStoryEventDto,
@@ -24,15 +25,14 @@ import {
 class PrismaDatabaseService implements DatabaseService {
   constructor(private readonly db: PrismaClient) {}
 
-  async createStory(
-    input: CreateStoryInput,
-  ): Promise<StoryDto> {
+  async createStory(input: CreateStoryInput): Promise<StoryDto> {
     const story = (await this.db.story.create({
       data: {
         userId: input.userId,
         title: input.title,
         questionAnswers: {
           create: input.responses.map((response) => ({
+            userId: input.userId,
             question: {
               connect: { id: response.questionId },
             },
@@ -120,9 +120,7 @@ class PrismaDatabaseService implements DatabaseService {
     return {
       story: mapStoryDto(story as StoryWithResponses),
       chapters: story.chapters.map(mapChapterDto),
-      tasks: story.chapters.flatMap((chapter) =>
-        chapter.tasks.map(mapTaskDto),
-      ),
+      tasks: story.chapters.flatMap((chapter) => chapter.tasks.map(mapTaskDto)),
       promptExecutions: story.promptExecutions.map(mapPromptExecutionDto),
       events: story.events.map(mapStoryEventDto),
     };
@@ -148,8 +146,53 @@ class PrismaDatabaseService implements DatabaseService {
       status: story.status,
     }));
   }
+
+  async createIntakeForm(
+    intakeForm: IntakeFormQuestions,
+  ): Promise<IntakeFormDto> {
+    const created = (await this.db.intakeForm.create({
+      data: {
+        name: intakeForm.name,
+        questions: {
+          create: intakeForm.questions.map((question) => ({
+            id: question.id,
+            prompt: question.prompt,
+            options: question.options,
+            questionType: question.questionType,
+            position: question.position,
+          })),
+        },
+      },
+      include: {
+        questions: {
+          orderBy: {
+            position: 'asc',
+          },
+        },
+      },
+    })) as IntakeFormWithQuestions;
+
+    return mapIntakeFormDto(created);
+  }
+
+  async getIntakeFormByName(name: string): Promise<IntakeFormDto | null> {
+    const form = (await this.db.intakeForm.findUnique({
+      where: { name },
+      include: {
+        questions: {
+          orderBy: {
+            position: 'asc',
+          },
+        },
+      },
+    })) as IntakeFormWithQuestions | null;
+
+    return form ? mapIntakeFormDto(form) : null;
+  }
 }
 
-export const createDatabaseService = ({ db }: DatabaseServiceDependencies): DatabaseService => {
+export const createDatabaseService = ({
+  db,
+}: DatabaseServiceDependencies): DatabaseService => {
   return new PrismaDatabaseService(db);
 };

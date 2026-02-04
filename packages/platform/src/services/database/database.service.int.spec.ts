@@ -1,5 +1,13 @@
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
-import { PrismaClient } from '@prisma/client';
+import {
+  beforeAll,
+  afterAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+} from 'vitest';
+import { randomUUID } from 'node:crypto';
+import { PrismaClient, QuestionType } from '@prisma/client';
 import { createDatabaseService } from './service.js';
 import type { DatabaseService } from './types.js';
 import {
@@ -40,7 +48,9 @@ describe('PrismaDatabaseService integration', () => {
     result.responses.forEach((response, index) => {
       expect(response.question.id).toBe(QUESTION_FIXTURES[index]!.id);
       if (QUESTION_FIXTURES[index]!.questionType === 'multi_select') {
-        expect(response.answer.answer).toEqual([QUESTION_FIXTURES[index]!.options[0]]);
+        expect(response.answer.answer).toEqual([
+          QUESTION_FIXTURES[index]!.options[0],
+        ]);
       } else {
         expect(response.answer.answer).toBe(`Answer ${index + 1}`);
       }
@@ -158,5 +168,52 @@ describe('PrismaDatabaseService integration', () => {
         }),
       );
     });
+  });
+
+  it('creates an intake form with ordered questions and fetches it by name', async () => {
+    const formName = `intake-${randomUUID()}`;
+    const intakeForm = {
+      name: formName,
+      questions: [
+        {
+          id: 'intake_question_secondary',
+          prompt: 'How soon do you need results?',
+          options: ['ASAP', '1-2 weeks', 'Flexible'],
+          questionType: QuestionType.single_select,
+          position: 1,
+        },
+        {
+          id: 'intake_question_primary',
+          prompt: 'What problem are you solving?',
+          options: [],
+          questionType: QuestionType.free_text,
+          position: 0,
+        },
+      ],
+    };
+
+    const created = await service.createIntakeForm(intakeForm);
+
+    expect(created.name).toBe(formName);
+    expect(created.questions.map((question) => question.position)).toEqual([
+      0, 1,
+    ]);
+    expect(created.questions.map((question) => question.id)).toEqual([
+      'intake_question_primary',
+      'intake_question_secondary',
+    ]);
+
+    const fetched = await service.getIntakeFormByName(formName);
+    expect(fetched?.id).toBe(created.id);
+    expect(fetched?.questions.map((question) => question.id)).toEqual([
+      'intake_question_primary',
+      'intake_question_secondary',
+    ]);
+  });
+
+  it('returns null when fetching a missing intake form', async () => {
+    const result = await service.getIntakeFormByName('missing_intake_form');
+
+    expect(result).toBeNull();
   });
 });

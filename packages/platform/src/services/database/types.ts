@@ -1,6 +1,8 @@
 import type { PrismaClient } from '@prisma/client';
 import type {
   CreateStoryInput,
+  IntakeFormDto,
+  IntakeFormQuestions,
   StoryContextDto,
   StoryDto,
   StorySummaryDto,
@@ -15,4 +17,8 @@ export interface DatabaseService {
   getStoryById(storyId: string, userId: string): Promise<StoryDto | null>;
   getStoryContext(storyId: string, userId: string): Promise<StoryContextDto>;
   getStoriesByUserId(userId: string): Promise<StorySummaryDto[]>;
+  createIntakeForm(
+    intakeForm: IntakeFormQuestions,
+  ): Promise<IntakeFormDto>;
+  getIntakeFormByName(name: string): Promise<IntakeFormDto | null>;
 }

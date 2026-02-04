@@ -1,5 +1,6 @@
 import type {
   Chapter as ChapterModel,
+  IntakeForm as IntakeFormModel,
   IntakeQuestion as IntakeQuestionModel,
   Prisma,
   PromptExecution as PromptExecutionModel,
@@ -11,6 +12,7 @@ import type {
 import type {
   ChapterDto,
   IntakeQuestionDto,
+  IntakeFormDto,
   PromptExecutionDto,
   QuestionAnswerDto,
   QuestionResponseDto,
@@ -31,6 +33,10 @@ export type StoryWithContext = StoryWithResponses & {
   chapters: (ChapterModel & { tasks: TaskModel[] })[];
   promptExecutions: PromptExecutionModel[];
   events: StoryEventModel[];
+};
+
+export type IntakeFormWithQuestions = IntakeFormModel & {
+  questions: IntakeQuestionModel[];
 };
 
 export const mapIntakeQuestionDto = (
@@ -153,14 +159,22 @@ export const mapStoryEventDto = (event: StoryEventModel): StoryEventDto => ({
   createdAt: event.createdAt.toISOString(),
 });
 
-const normalizeAnswer = (value: Prisma.JsonValue): string | string[] => {
+export const mapIntakeFormDto = (
+  form: IntakeFormWithQuestions,
+): IntakeFormDto => ({
+  id: form.id,
+  name: form.name,
+  questions: form.questions.map(mapIntakeQuestionDto),
+});
+
+const normalizeAnswer = (value: Prisma.JsonValue): string[] => {
   if (typeof value === 'string') {
-    return value;
+    return [value];
   }
 
   if (
     Array.isArray(value) &&
-    value.every((entry) => typeof entry === 'string')
+    value.every((entry): entry is string => typeof entry === 'string')
   ) {
     return value;
   }

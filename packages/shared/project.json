@@ -8,9 +8,7 @@
       "options": {
         "command": "yarn tsc -b packages/shared/tsconfig.json"
       },
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
+      "outputs": ["{projectRoot}/dist"]
     }
   }
 }

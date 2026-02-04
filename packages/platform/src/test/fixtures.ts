@@ -39,6 +39,8 @@ export const QUESTION_FIXTURES: Array<{
   },
 ];
 
+export const DEFAULT_INTAKE_FORM_NAME = 'default_intake_form';
+
 export const resetDatabase = async (prisma: PrismaClient): Promise<void> => {
   await prisma.questionAnswer.deleteMany();
   await prisma.task.deleteMany();
@@ -48,20 +50,26 @@ export const resetDatabase = async (prisma: PrismaClient): Promise<void> => {
   await prisma.story.deleteMany();
   await prisma.user.deleteMany();
   await prisma.intakeQuestion.deleteMany();
+  await prisma.intakeForm.deleteMany();
   await seedIntakeQuestions(prisma);
 };
 
 export const seedIntakeQuestions = async (
   prisma: PrismaClient,
 ): Promise<void> => {
-  await prisma.intakeQuestion.createMany({
-    data: QUESTION_FIXTURES.map((question) => ({
-      id: question.id,
-      prompt: question.prompt,
-      options: question.options,
-      questionType: question.questionType,
-      position: question.position,
-    })),
+  await prisma.intakeForm.create({
+    data: {
+      name: DEFAULT_INTAKE_FORM_NAME,
+      questions: {
+        create: QUESTION_FIXTURES.map((question) => ({
+          id: question.id,
+          prompt: question.prompt,
+          options: question.options,
+          questionType: question.questionType,
+          position: question.position,
+        })),
+      },
+    },
   });
 };
 
@@ -84,7 +92,7 @@ export const buildStoryInput = (userId: string): CreateStoryInput => ({
     questionId: question.id,
     answer:
       question.questionType === 'multi_select'
-        ? [question.options[0]]
-        : `Answer ${index + 1}`,
+        ? [question.options[0]!]
+        : [`Answer ${index + 1}`],
   })),
 });

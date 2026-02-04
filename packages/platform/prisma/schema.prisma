@@ -71,6 +71,12 @@ model User {
   stories  Story[]
 }
 
+model IntakeForm {
+  id        String           @id @default(uuid())
+  name      String           @unique
+  questions IntakeQuestion[]
+}
+
 model IntakeQuestion {
   id           String           @id @default(uuid())
   prompt       String
@@ -79,19 +85,20 @@ model IntakeQuestion {
   position     Int
   createdAt    DateTime         @default(now())
   updatedAt    DateTime         @updatedAt
+  formId       String
+  form         IntakeForm       @relation(fields: [formId], references: [id])
   answers      QuestionAnswer[]
 }
 
 model QuestionAnswer {
   id         String         @id @default(uuid())
+  userId     String
   storyId    String
   questionId String
   answer     Json
   answeredAt DateTime       @default(now())
   story      Story          @relation(fields: [storyId], references: [id], onDelete: Cascade)
   question   IntakeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
-
-  @@unique([storyId, questionId])
 }
 
 model Story {

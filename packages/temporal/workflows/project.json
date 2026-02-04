@@ -8,9 +8,7 @@
       "options": {
         "command": "yarn tsc -b packages/temporal/workflows/tsconfig.json"
       },
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
+      "outputs": ["{projectRoot}/dist"]
     }
   }
 }

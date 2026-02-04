@@ -1,6 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import styles from './app.module.css';
-import { IntakeQuestionDto, IntakeRequest, QuestionResponseInput, StoryResponse } from '@formiq/shared';
+import {
+  IntakeQuestionDto,
+  IntakeRequest,
+  QuestionResponseInput,
+  StoryResponse,
+} from '@formiq/shared';
 
 const FALLBACK_QUESTIONS: IntakeQuestionDto[] = [
   {
@@ -28,7 +33,13 @@ const FALLBACK_QUESTIONS: IntakeQuestionDto[] = [
     id: 'question_resources',
     prompt: 'Which resources or tools do you prefer?',
     questionType: 'multi_select',
-    options: ['AI tooling', 'Design tools', 'Code editors', 'Automation', 'No-code'],
+    options: [
+      'AI tooling',
+      'Design tools',
+      'Code editors',
+      'Automation',
+      'No-code',
+    ],
     position: 3,
   },
 ];
@@ -63,20 +74,23 @@ export function App() {
     loadQuestions();
   }, []);
 
-  const responsePayload: QuestionResponseInput[] = useMemo(
-    () =>
-      questions.map((question, index) => {
-        const answer = answers[index];
+  const responsePayload: QuestionResponseInput[] = useMemo(() => {
+    return questions.map((question, index) => {
+      const answer = answers[index];
+      if (question.questionType === 'multi_select') {
+        const list = Array.isArray(answer) ? (answer as string[]) : [];
         return {
           questionId: question.id,
-          answer:
-            question.questionType === 'multi_select'
-              ? ((Array.isArray(answer) ? answer : []).filter(Boolean) as string[])
-              : ((answer as string) ?? ''),
+          answer: list.filter((value): value is string => Boolean(value)),
         };
-      }),
-    [answers, questions],
-  );
+      }
+
+      return {
+        questionId: question.id,
+        answer: answer ? [answer as string] : [''],
+      };
+    });
+  }, [answers, questions]);
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -124,10 +138,7 @@ export function App() {
     }
   };
 
-  const updateAnswer = (
-    index: number,
-    value: string | string[],
-  ): void => {
+  const updateAnswer = (index: number, value: string | string[]): void => {
     setAnswers((prev) => ({ ...prev, [index]: value }));
   };
 
@@ -199,7 +210,9 @@ export function App() {
                 ) : (
                   <textarea
                     value={(answers[index] as string) ?? ''}
-                    onChange={(event) => updateAnswer(index, event.target.value)}
+                    onChange={(event) =>
+                      updateAnswer(index, event.target.value)
+                    }
                     placeholder="Type your answer"
                     rows={3}
                   />
@@ -220,16 +233,17 @@ export function App() {
           <h2>Saved story</h2>
           <p className={styles.storyTitle}>{story.title}</p>
           <p className={styles.storyMeta}>
-            Status: {story.status} · Responses captured: {story.responses.length}
+            Status: {story.status} · Responses captured:{' '}
+            {story.responses.length}
           </p>
           <ul className={styles.detailList}>
             {story.responses.map((response) => (
               <li key={response.answer.questionId}>
                 <strong>{response.question.prompt}</strong>
                 <div>
-                  {Array.isArray(response.answer.answer)
+                  {response.answer.answer.length > 0
                     ? response.answer.answer.join(', ')
-                    : response.answer.answer || 'No answer yet'}
+                    : 'No answer yet'}
                 </div>
               </li>
             ))}

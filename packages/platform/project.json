@@ -8,9 +8,7 @@
       "options": {
         "command": "yarn tsc -b packages/platform/tsconfig.json"
       },
-      "outputs": [
-        "{projectRoot}/dist"
-      ]
+      "outputs": ["{projectRoot}/dist"]
     },
     "test": {
       "executor": "nx:run-commands",

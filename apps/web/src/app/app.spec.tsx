@@ -19,8 +19,6 @@ describe('App', () => {
         <App />
       </BrowserRouter>,
     );
-    expect(
-      getByText(/Capture a goal and the context/i),
-    ).toBeInTheDocument();
+    expect(getByText(/Capture a goal and the context/i)).toBeInTheDocument();
   });
 });
