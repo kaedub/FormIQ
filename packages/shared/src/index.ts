@@ -2,13 +2,7 @@ export type QuestionType = 'multi_select' | 'single_select' | 'free_text';
 
 export interface QuestionResponseInput {
   questionId: string;
-  answer: string[];
-}
-
-export interface IntakeRequest {
-  email: string;
-  title: string;
-  responses: QuestionResponseInput[];
+  values: string[];
 }
 
 export interface CreateStoryInput {
@@ -45,7 +39,7 @@ export interface IntakeFormQuestions {
 export interface QuestionAnswerDto {
   questionId: string;
   storyId: string;
-  answer: string[];
+  values: string[];
   answeredAt: string;
 }
 

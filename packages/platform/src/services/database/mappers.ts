@@ -2,7 +2,6 @@ import type {
   Chapter as ChapterModel,
   IntakeForm as IntakeFormModel,
   IntakeQuestion as IntakeQuestionModel,
-  Prisma,
   PromptExecution as PromptExecutionModel,
   QuestionAnswer as QuestionAnswerModel,
   StoryEvent as StoryEventModel,
@@ -54,7 +53,7 @@ export const mapQuestionAnswerDto = (
 ): QuestionAnswerDto => ({
   questionId: answer.questionId,
   storyId: answer.storyId,
-  answer: normalizeAnswer(answer.answer),
+  values: answer.values,
   answeredAt: answer.answeredAt.toISOString(),
 });
 
@@ -166,18 +165,3 @@ export const mapIntakeFormDto = (
   name: form.name,
   questions: form.questions.map(mapIntakeQuestionDto),
 });
-
-const normalizeAnswer = (value: Prisma.JsonValue): string[] => {
-  if (typeof value === 'string') {
-    return [value];
-  }
-
-  if (
-    Array.isArray(value) &&
-    value.every((entry): entry is string => typeof entry === 'string')
-  ) {
-    return value;
-  }
-
-  throw new Error('Question answer must be a string or string[]');
-};

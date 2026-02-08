@@ -36,7 +36,7 @@ class PrismaDatabaseService implements DatabaseService {
             question: {
               connect: { id: response.questionId },
             },
-            answer: response.answer,
+            values: response.values,
           })),
         },
       },

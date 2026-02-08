@@ -90,7 +90,7 @@ export const buildStoryInput = (userId: string): CreateStoryInput => ({
   title: 'Test story',
   responses: QUESTION_FIXTURES.map((question, index) => ({
     questionId: question.id,
-    answer:
+    values:
       question.questionType === 'multi_select'
         ? [question.options[0]!]
         : [`Answer ${index + 1}`],

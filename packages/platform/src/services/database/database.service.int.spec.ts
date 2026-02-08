@@ -48,11 +48,11 @@ describe('PrismaDatabaseService integration', () => {
     result.responses.forEach((response, index) => {
       expect(response.question.id).toBe(QUESTION_FIXTURES[index]!.id);
       if (QUESTION_FIXTURES[index]!.questionType === 'multi_select') {
-        expect(response.answer.answer).toEqual([
+        expect(response.answer.values).toEqual([
           QUESTION_FIXTURES[index]!.options[0],
         ]);
       } else {
-        expect(response.answer.answer).toBe(`Answer ${index + 1}`);
+        expect(response.answer.values).toEqual([`Answer ${index + 1}`]);
       }
     });
 

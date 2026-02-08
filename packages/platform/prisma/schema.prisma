@@ -95,7 +95,7 @@ model QuestionAnswer {
   userId     String
   storyId    String
   questionId String
-  answer     Json
+  values     String[]
   answeredAt DateTime       @default(now())
   story      Story          @relation(fields: [storyId], references: [id], onDelete: Cascade)
   question   IntakeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)

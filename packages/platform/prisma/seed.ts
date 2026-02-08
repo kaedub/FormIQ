@@ -12,6 +12,11 @@ type IntakeQuestionSeed = {
 const prisma = getPrismaClient();
 
 const intakeFormName = 'goal_intake_v1';
+const testUser = {
+  id: 'test-user-id',
+  email: 'test@test',
+  password: 'test',
+};
 
 const questions: IntakeQuestionSeed[] = [
   {
@@ -66,6 +71,13 @@ const questions: IntakeQuestionSeed[] = [
 ];
 
 const main = async (): Promise<void> => {
+  console.log('Seeding test user:', testUser.email);
+  await prisma.user.upsert({
+    where: { email: testUser.email },
+    update: {},
+    create: testUser,
+  });
+
   console.log('Seeding intake form:', intakeFormName);
   await prisma.intakeForm.upsert({
     where: { name: intakeFormName },

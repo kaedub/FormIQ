@@ -15,6 +15,158 @@
     sans-serif;
 }
 
+.home {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  background: radial-gradient(circle at 20% 20%, #f8fbff, #eef2ff 35%, #f7f7fb);
+  color: #0f172a;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    sans-serif;
+}
+
+.homeCard {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  padding: 2rem;
+  box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+  max-width: 760px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.homeTitle {
+  margin: 0.1rem 0 0.3rem;
+  font-size: 2rem;
+}
+
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: #fef2f2;
+  border: 1px solid #fecdd3;
+  color: #991b1b;
+}
+
+.retryButton {
+  padding: 0.55rem 0.9rem;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(120deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.storyCardLink {
+  text-decoration: none;
+}
+
+.homeActions {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.primaryLink {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: linear-gradient(120deg, #2563eb, #1d4ed8);
+  color: #ffffff;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.25);
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.primaryLink:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 18px 40px rgba(37, 99, 235, 0.3);
+}
+
+.homePlaceholder {
+  margin-top: 0.5rem;
+  padding: 0.9rem 1rem;
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 12px;
+  color: #475569;
+}
+
+.storyList {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.storyCard {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 1rem;
+  background: linear-gradient(145deg, #ffffff, #f8fbff);
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease;
+}
+
+.storyCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.12);
+}
+
+.storyCardTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.storyBadge {
+  padding: 0.3rem 0.6rem;
+  border-radius: 999px;
+  background: #eef2ff;
+  color: #312e81;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.storyStatus {
+  margin: 0;
+  font-weight: 700;
+  color: #0f172a;
+  text-transform: capitalize;
+}
+
+.storyTitleHome {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #111827;
+}
+
 .panel {
   background: #ffffff;
   border: 1px solid #e5e7eb;

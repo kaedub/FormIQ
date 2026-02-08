@@ -1,73 +1,119 @@
-import { useEffect, useMemo, useState } from 'react';
+import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import styles from './app.module.css';
 import {
   IntakeQuestionDto,
-  IntakeRequest,
   QuestionResponseInput,
-  StoryResponse,
+  StoryDto,
+  StorySummaryDto,
 } from '@formiq/shared';
 
-const FALLBACK_QUESTIONS: IntakeQuestionDto[] = [
-  {
-    id: 'question_goal',
-    prompt: 'What is the goal you want to achieve?',
-    questionType: 'free_text',
-    options: [],
-    position: 0,
-  },
-  {
-    id: 'question_constraints',
-    prompt: 'What constraints or deadlines do you have?',
-    questionType: 'free_text',
-    options: [],
-    position: 1,
-  },
-  {
-    id: 'question_success',
-    prompt: 'How will you measure success?',
-    questionType: 'free_text',
-    options: [],
-    position: 2,
-  },
-  {
-    id: 'question_resources',
-    prompt: 'Which resources or tools do you prefer?',
-    questionType: 'multi_select',
-    options: [
-      'AI tooling',
-      'Design tools',
-      'Code editors',
-      'Automation',
-      'No-code',
-    ],
-    position: 3,
-  },
-];
+const API_BASE = 'http://localhost:3001';
+const INTAKE_FORM_NAME = 'goal_intake_v1';
 
-const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
+type AnswerState = Record<string, string | string[]>;
 
-type AnswerState = Record<number, string | string[]>;
+function HomePage(): JSX.Element {
+  const [stories, setStories] = useState<StorySummaryDto[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-export function App() {
+  const loadStories = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`${API_BASE}/stories`);
+      if (!res.ok) {
+        throw new Error(`Failed to load stories: ${res.status}`);
+      }
+      const data = await res.json();
+      setStories(data.stories);
+    } catch (err) {
+      console.warn('Could not load stories', err);
+      setStories([]);
+      setError('Unable to load stories right now. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadStories();
+  }, [loadStories]);
+
+
+  return (
+    <div className={styles.home}>
+      <div className={styles.homeCard}>
+        <p className={styles.eyebrow}>Story hub</p>
+        <h1 className={styles.homeTitle}>Your stories</h1>
+        <p className={styles.lead}>
+          Start a new story to capture a goal and its context. Your saved work
+          will appear here.
+        </p>
+        <div className={styles.homeActions}>
+          <Link to="/intake" className={styles.primaryLink}>
+            Start New Story
+          </Link>
+        </div>
+        <div className={styles.storyList}>
+          {loading ? (
+            <div className={styles.homePlaceholder}>
+              <p>Loading stories…</p>
+            </div>
+          ) : error ? (
+            <div className={styles.homePlaceholder}>
+              <p>{error}</p>
+            </div>
+          ) : stories.length === 0 ? (
+            <div className={styles.homePlaceholder}>
+              <p>No stories yet. Create one to see it here.</p>
+            </div>
+          ) : (
+            stories.map((story) => (
+              <Link
+                key={story.id}
+                to={`/stories/${story.id}`}
+                className={styles.storyCardLink}
+              >
+                <article className={styles.storyCard}>
+                  <div className={styles.storyCardTop}>
+                    <p className={styles.storyStatus}>
+                      {story.status ?? 'unknown'}
+                    </p>
+                    <span className={styles.storyBadge}>Story</span>
+                  </div>
+                  <h2 className={styles.storyTitleHome}>{story.title}</h2>
+                </article>
+              </Link>
+            ))
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IntakePage(): JSX.Element {
   const [questions, setQuestions] = useState<IntakeQuestionDto[]>([]);
   const [answers, setAnswers] = useState<AnswerState>({});
-  const [email, setEmail] = useState('');
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [story, setStory] = useState<StoryResponse | null>(null);
+  const [story, setStory] = useState<StoryDto | null>(null);
 
   useEffect(() => {
     const loadQuestions = async () => {
       try {
-        const res = await fetch(`${API_BASE}/questions`);
+        const res = await fetch(
+          `${API_BASE}/intake-forms/${INTAKE_FORM_NAME}`,
+        );
         if (!res.ok) throw new Error('Failed to load questions');
         const data = await res.json();
-        setQuestions(data.questions ?? FALLBACK_QUESTIONS);
+        setQuestions(data.form?.questions);
       } catch (error) {
         console.warn('Falling back to static questions', error);
         setStatus('Using fallback questions; API not reachable yet.');
-        setQuestions(FALLBACK_QUESTIONS);
       }
     };
 
@@ -76,18 +122,18 @@ export function App() {
 
   const responsePayload: QuestionResponseInput[] = useMemo(() => {
     return questions.map((question, index) => {
-      const answer = answers[index];
+      const value = answers[question.id];
       if (question.questionType === 'multi_select') {
-        const list = Array.isArray(answer) ? (answer as string[]) : [];
+        const list = Array.isArray(value) ? (value as string[]) : [];
         return {
           questionId: question.id,
-          answer: list.filter((value): value is string => Boolean(value)),
+          values: list.filter((value): value is string => Boolean(value)),
         };
       }
 
       return {
         questionId: question.id,
-        answer: answer ? [answer as string] : [''],
+        values: value ? [value as string] : [''],
       };
     });
   }, [answers, questions]);
@@ -98,23 +144,20 @@ export function App() {
     setStatus(null);
     setStory(null);
 
-    if (!email || !title) {
-      setStatus('Email and goal title are required.');
+    if (!title.trim()) {
+      setStatus('Goal title is required.');
       setLoading(false);
       return;
     }
-
-    const payload: IntakeRequest = {
-      email,
-      title,
-      responses: responsePayload,
-    };
 
     try {
       const res = await fetch(`${API_BASE}/stories`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          title: title.trim(),
+          responses: responsePayload,
+        }), 
       });
 
       if (!res.ok) {
@@ -122,7 +165,7 @@ export function App() {
         throw new Error(message || 'Failed to save story');
       }
 
-      const saved = (await res.json()) as StoryResponse;
+      const saved = (await res.json()) as StoryDto;
       setStory(saved);
       setStatus('Saved goal and answers.');
       setAnswers({});
@@ -138,8 +181,8 @@ export function App() {
     }
   };
 
-  const updateAnswer = (index: number, value: string | string[]): void => {
-    setAnswers((prev) => ({ ...prev, [index]: value }));
+  const updateAnswer = (questionId: string, value: string | string[]): void => {
+    setAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
 
   return (
@@ -155,17 +198,6 @@ export function App() {
         </header>
 
         <form className={styles.form} onSubmit={submit}>
-          <label className={styles.field}>
-            <span>Email</span>
-            <input
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-              required
-            />
-          </label>
-
           <label className={styles.field}>
             <span>Goal title</span>
             <input
@@ -184,8 +216,8 @@ export function App() {
                 {question.questionType === 'multi_select' ? (
                   <div className={styles.options}>
                     {question.options.map((option) => {
-                      const selected = Array.isArray(answers[index])
-                        ? (answers[index] as string[]).includes(option)
+                      const selected = Array.isArray(answers[question.id])
+                        ? (answers[question.id] as string[]).includes(option)
                         : false;
                       return (
                         <label key={option} className={styles.option}>
@@ -193,13 +225,13 @@ export function App() {
                             type="checkbox"
                             checked={selected}
                             onChange={(event) => {
-                              const current = Array.isArray(answers[index])
-                                ? (answers[index] as string[])
+                              const current = Array.isArray(answers[question.id])
+                                ? (answers[question.id] as string[])
                                 : [];
                               const next = event.target.checked
                                 ? [...current, option]
                                 : current.filter((item) => item !== option);
-                              updateAnswer(index, next);
+                              updateAnswer(question.id, next);
                             }}
                           />
                           {option}
@@ -209,9 +241,9 @@ export function App() {
                   </div>
                 ) : (
                   <textarea
-                    value={(answers[index] as string) ?? ''}
+                    value={(answers[question.id] as string) ?? ''}
                     onChange={(event) =>
-                      updateAnswer(index, event.target.value)
+                      updateAnswer(question.id, event.target.value)
                     }
                     placeholder="Type your answer"
                     rows={3}
@@ -241,8 +273,8 @@ export function App() {
               <li key={response.answer.questionId}>
                 <strong>{response.question.prompt}</strong>
                 <div>
-                  {response.answer.answer.length > 0
-                    ? response.answer.answer.join(', ')
+                  {response.answer.values.length > 0
+                    ? response.answer.values.join(', ')
                     : 'No answer yet'}
                 </div>
               </li>
@@ -251,6 +283,37 @@ export function App() {
         </section>
       )}
     </main>
+  );
+}
+
+function StoryDetailsPage(): JSX.Element {
+  const { storyId } = useParams<{ storyId: string }>();
+  return (
+    <div className={styles.home}>
+      <div className={styles.homeCard}>
+        <p className={styles.eyebrow}>Story detail</p>
+        <h1 className={styles.homeTitle}>Story {storyId}</h1>
+        <p className={styles.lead}>
+          Detailed view coming soon. Use the intake form to add more stories.
+        </p>
+        <div className={styles.homeActions}>
+          <Link to="/" className={styles.primaryLink}>
+            Back to stories
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function App(): JSX.Element {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />
+      <Route path="/intake" element={<IntakePage />} />
+      <Route path="/stories/:storyId" element={<StoryDetailsPage />} />
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }
 
