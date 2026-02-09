@@ -1,22 +1,22 @@
 import type {
-  Chapter as ChapterModel,
   IntakeForm as IntakeFormModel,
   IntakeQuestion as IntakeQuestionModel,
+  Milestone as MilestoneModel,
+  Project as ProjectModel,
+  ProjectEvent as ProjectEventModel,
   PromptExecution as PromptExecutionModel,
   QuestionAnswer as QuestionAnswerModel,
-  StoryEvent as StoryEventModel,
-  Story as StoryModel,
   Task as TaskModel,
 } from '@prisma/client';
 import type {
-  ChapterDto,
   IntakeQuestionDto,
   IntakeFormDto,
+  MilestoneDto,
   PromptExecutionDto,
+  ProjectDto,
+  ProjectEventDto,
   QuestionAnswerDto,
   QuestionResponseDto,
-  StoryDto,
-  StoryEventDto,
   TaskDto,
 } from '@formiq/shared';
 
@@ -24,14 +24,14 @@ export type QuestionAnswerWithQuestion = QuestionAnswerModel & {
   question: IntakeQuestionModel;
 };
 
-export type StoryWithResponses = StoryModel & {
+export type ProjectWithResponses = ProjectModel & {
   questionAnswers: QuestionAnswerWithQuestion[];
 };
 
-export type StoryWithContext = StoryWithResponses & {
-  chapters: (ChapterModel & { tasks: TaskModel[] })[];
+export type ProjectWithContext = ProjectWithResponses & {
+  milestones: (MilestoneModel & { tasks: TaskModel[] })[];
   promptExecutions: PromptExecutionModel[];
-  events: StoryEventModel[];
+  events: ProjectEventModel[];
 };
 
 export type IntakeFormWithQuestions = IntakeFormModel & {
@@ -52,7 +52,7 @@ export const mapQuestionAnswerDto = (
   answer: QuestionAnswerModel,
 ): QuestionAnswerDto => ({
   questionId: answer.questionId,
-  storyId: answer.storyId,
+  projectId: answer.projectId,
   values: answer.values,
   answeredAt: answer.answeredAt.toISOString(),
 });
@@ -64,35 +64,35 @@ export const mapQuestionResponseDto = (
   answer: mapQuestionAnswerDto(entry),
 });
 
-export const mapStoryDto = (story: StoryWithResponses): StoryDto => {
-  const dto: StoryDto = {
-    id: story.id,
-    userId: story.userId,
-    title: story.title,
-    status: story.status,
-    createdAt: story.createdAt.toISOString(),
-    updatedAt: story.updatedAt.toISOString(),
-    responses: story.questionAnswers.map(mapQuestionResponseDto),
+export const mapProjectDto = (project: ProjectWithResponses): ProjectDto => {
+  const dto: ProjectDto = {
+    id: project.id,
+    userId: project.userId,
+    title: project.title,
+    status: project.status,
+    createdAt: project.createdAt.toISOString(),
+    updatedAt: project.updatedAt.toISOString(),
+    responses: project.questionAnswers.map(mapQuestionResponseDto),
   };
-  if (story.generatedAt) {
-    dto.generatedAt = story.generatedAt.toISOString();
+  if (project.generatedAt) {
+    dto.generatedAt = project.generatedAt.toISOString();
   }
   return dto;
 };
 
-export const mapChapterDto = (chapter: ChapterModel): ChapterDto => {
-  const dto: ChapterDto = {
-    id: chapter.id,
-    storyId: chapter.storyId,
-    title: chapter.title,
-    summary: chapter.summary,
-    context: chapter.context ?? undefined,
-    position: chapter.position,
-    status: chapter.status,
-    metadata: chapter.metadata ?? undefined,
+export const mapMilestoneDto = (milestone: MilestoneModel): MilestoneDto => {
+  const dto: MilestoneDto = {
+    id: milestone.id,
+    projectId: milestone.projectId,
+    title: milestone.title,
+    summary: milestone.summary,
+    context: milestone.context ?? undefined,
+    position: milestone.position,
+    status: milestone.status,
+    metadata: milestone.metadata ?? undefined,
   };
-  if (chapter.generatedAt) {
-    dto.generatedAt = chapter.generatedAt.toISOString();
+  if (milestone.generatedAt) {
+    dto.generatedAt = milestone.generatedAt.toISOString();
   }
   return dto;
 };
@@ -100,7 +100,7 @@ export const mapChapterDto = (chapter: ChapterModel): ChapterDto => {
 export const mapTaskDto = (task: TaskModel): TaskDto => {
   const dto: TaskDto = {
     id: task.id,
-    chapterId: task.chapterId,
+    milestoneId: task.milestoneId,
     title: task.title,
     description: task.description,
     position: task.position,
@@ -121,15 +121,15 @@ export const mapPromptExecutionDto = (
 ): PromptExecutionDto => {
   const dto: PromptExecutionDto = {
     id: exec.id,
-    storyId: exec.storyId,
+    projectId: exec.projectId,
     stage: exec.stage,
     status: exec.status,
     input: exec.input,
     createdAt: exec.createdAt.toISOString(),
   };
 
-  if (exec.chapterId) {
-    dto.chapterId = exec.chapterId;
+  if (exec.milestoneId) {
+    dto.milestoneId = exec.milestoneId;
   }
   if (exec.taskId) {
     dto.taskId = exec.taskId;
@@ -150,9 +150,9 @@ export const mapPromptExecutionDto = (
   return dto;
 };
 
-export const mapStoryEventDto = (event: StoryEventModel): StoryEventDto => ({
+export const mapProjectEventDto = (event: ProjectEventModel): ProjectEventDto => ({
   id: event.id,
-  storyId: event.storyId,
+  projectId: event.projectId,
   eventType: event.eventType,
   payload: event.payload ?? undefined,
   createdAt: event.createdAt.toISOString(),

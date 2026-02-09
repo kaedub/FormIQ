@@ -18,7 +18,7 @@ enum TaskStatus {
   completed
 }
 
-enum ChapterStatus {
+enum MilestoneStatus {
   locked
   unlocked
   completed
@@ -30,7 +30,7 @@ enum QuestionType {
   free_text
 }
 
-enum StoryStatus {
+enum ProjectStatus {
   draft
   generating
   ready
@@ -44,9 +44,9 @@ enum PromptPurpose {
 }
 
 enum PromptExecutionStage {
-  story_context
-  chapter_outline
-  chapter_validation
+  project_context
+  milestone_outline
+  milestone_validation
   task_generation
   task_validation
 }
@@ -57,9 +57,9 @@ enum PromptExecutionStatus {
   failed
 }
 
-enum StoryEventType {
+enum ProjectEventType {
   status_change
-  chapter_generated
+  milestone_generated
   task_generated
   task_completed
 }
@@ -68,7 +68,7 @@ model User {
   id       String  @id @default(uuid())
   email    String  @unique
   password String
-  stories  Story[]
+  projects Project[]
 }
 
 model IntakeForm {
@@ -93,47 +93,47 @@ model IntakeQuestion {
 model QuestionAnswer {
   id         String         @id @default(uuid())
   userId     String
-  storyId    String
+  projectId  String
   questionId String
   values     String[]
   answeredAt DateTime       @default(now())
-  story      Story          @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
   question   IntakeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
 }
 
-model Story {
+model Project {
   id               String            @id @default(uuid())
   userId           String
   title            String
-  status           StoryStatus       @default(draft)
+  status           ProjectStatus     @default(draft)
   generatedAt      DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   questionAnswers  QuestionAnswer[]
-  chapters         Chapter[]
+  milestones       Milestone[]
   promptExecutions PromptExecution[]
-  events           StoryEvent[]
+  events           ProjectEvent[]
 }
 
-model Chapter {
+model Milestone {
   id               String            @id @default(uuid())
   title            String
   summary          String
   context          Json?
   position         Int
-  status           ChapterStatus     @default(locked)
+  status           MilestoneStatus   @default(locked)
   generatedAt      DateTime?
   metadata         Json?
-  storyId          String
-  story            Story             @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  projectId        String
+  project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks            Task[]
   promptExecutions PromptExecution[]
 }
 
 model Task {
   id               String            @id @default(uuid())
-  chapterId        String
+  milestoneId      String
   title            String
   description      String
   position         Int
@@ -141,7 +141,7 @@ model Task {
   generatedAt      DateTime?
   completedAt      DateTime?
   metadata         Json?
-  chapter          Chapter           @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  milestone        Milestone         @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   promptExecutions PromptExecution[]
 }
 
@@ -158,8 +158,8 @@ model PromptTemplate {
 
 model PromptExecution {
   id         String                @id @default(uuid())
-  storyId    String
-  chapterId  String?
+  projectId  String
+  milestoneId String?
   taskId     String?
   templateId String?
   stage      PromptExecutionStage
@@ -169,17 +169,17 @@ model PromptExecution {
   model      String?
   metadata   Json?
   createdAt  DateTime              @default(now())
-  story      Story                 @relation(fields: [storyId], references: [id], onDelete: Cascade)
-  chapter    Chapter?              @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone  Milestone?            @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   task       Task?                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
   template   PromptTemplate?       @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
-model StoryEvent {
-  id        String         @id @default(uuid())
-  storyId   String
-  eventType StoryEventType
+model ProjectEvent {
+  id        String          @id @default(uuid())
+  projectId String
+  eventType ProjectEventType
   payload   Json?
-  createdAt DateTime       @default(now())
-  story     Story          @relation(fields: [storyId], references: [id], onDelete: Cascade)
+  createdAt DateTime        @default(now())
+  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

@@ -3,9 +3,9 @@ import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import styles from './app.module.css';
 import {
   IntakeQuestionDto,
+  ProjectDto,
+  ProjectSummaryDto,
   QuestionResponseInput,
-  StoryDto,
-  StorySummaryDto,
 } from '@formiq/shared';
 
 const API_BASE = 'http://localhost:3001';
@@ -14,76 +14,76 @@ const INTAKE_FORM_NAME = 'goal_intake_v1';
 type AnswerState = Record<string, string | string[]>;
 
 function HomePage(): JSX.Element {
-  const [stories, setStories] = useState<StorySummaryDto[]>([]);
+  const [projects, setProjects] = useState<ProjectSummaryDto[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const loadStories = useCallback(async () => {
+  const loadProjects = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/stories`);
+      const res = await fetch(`${API_BASE}/projects`);
       if (!res.ok) {
-        throw new Error(`Failed to load stories: ${res.status}`);
+        throw new Error(`Failed to load projects: ${res.status}`);
       }
       const data = await res.json();
-      setStories(data.stories);
+      setProjects(data.projects);
     } catch (err) {
-      console.warn('Could not load stories', err);
-      setStories([]);
-      setError('Unable to load stories right now. Please try again.');
+      console.warn('Could not load projects', err);
+      setProjects([]);
+      setError('Unable to load projects right now. Please try again.');
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadStories();
-  }, [loadStories]);
+    void loadProjects();
+  }, [loadProjects]);
 
 
   return (
     <div className={styles.home}>
       <div className={styles.homeCard}>
-        <p className={styles.eyebrow}>Story hub</p>
-        <h1 className={styles.homeTitle}>Your stories</h1>
+        <p className={styles.eyebrow}>Project hub</p>
+        <h1 className={styles.homeTitle}>Your projects</h1>
         <p className={styles.lead}>
-          Start a new story to capture a goal and its context. Your saved work
+          Start a new project to capture a goal and its context. Your saved work
           will appear here.
         </p>
         <div className={styles.homeActions}>
           <Link to="/intake" className={styles.primaryLink}>
-            Start New Story
+            Start New Project
           </Link>
         </div>
-        <div className={styles.storyList}>
+        <div className={styles.projectList}>
           {loading ? (
             <div className={styles.homePlaceholder}>
-              <p>Loading stories…</p>
+              <p>Loading projects…</p>
             </div>
           ) : error ? (
             <div className={styles.homePlaceholder}>
               <p>{error}</p>
             </div>
-          ) : stories.length === 0 ? (
+          ) : projects.length === 0 ? (
             <div className={styles.homePlaceholder}>
-              <p>No stories yet. Create one to see it here.</p>
+              <p>No projects yet. Create one to see it here.</p>
             </div>
           ) : (
-            stories.map((story) => (
+            projects.map((project) => (
               <Link
-                key={story.id}
-                to={`/stories/${story.id}`}
-                className={styles.storyCardLink}
+                key={project.id}
+                to={`/projects/${project.id}`}
+                className={styles.projectCardLink}
               >
-                <article className={styles.storyCard}>
-                  <div className={styles.storyCardTop}>
-                    <p className={styles.storyStatus}>
-                      {story.status ?? 'unknown'}
+                <article className={styles.projectCard}>
+                  <div className={styles.projectCardTop}>
+                    <p className={styles.projectStatus}>
+                      {project.status ?? 'unknown'}
                     </p>
-                    <span className={styles.storyBadge}>Story</span>
+                    <span className={styles.projectBadge}>Project</span>
                   </div>
-                  <h2 className={styles.storyTitleHome}>{story.title}</h2>
+                  <h2 className={styles.projectTitleHome}>{project.title}</h2>
                 </article>
               </Link>
             ))
@@ -100,7 +100,7 @@ function IntakePage(): JSX.Element {
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [story, setStory] = useState<StoryDto | null>(null);
+  const [project, setProject] = useState<ProjectDto | null>(null);
 
   useEffect(() => {
     const loadQuestions = async () => {
@@ -142,7 +142,7 @@ function IntakePage(): JSX.Element {
     event.preventDefault();
     setLoading(true);
     setStatus(null);
-    setStory(null);
+    setProject(null);
 
     if (!title.trim()) {
       setStatus('Goal title is required.');
@@ -151,7 +151,7 @@ function IntakePage(): JSX.Element {
     }
 
     try {
-      const res = await fetch(`${API_BASE}/stories`, {
+      const res = await fetch(`${API_BASE}/projects`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -162,19 +162,19 @@ function IntakePage(): JSX.Element {
 
       if (!res.ok) {
         const message = await res.text();
-        throw new Error(message || 'Failed to save story');
+        throw new Error(message || 'Failed to save project');
       }
 
-      const saved = (await res.json()) as StoryDto;
-      setStory(saved);
-      setStatus('Saved goal and answers.');
+      const saved = (await res.json()) as ProjectDto;
+      setProject(saved);
+      setStatus('Saved project and answers.');
       setAnswers({});
       setTitle('');
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : 'Failed to save goal; check API connection.',
+          : 'Failed to save project; check API connection.',
       );
     } finally {
       setLoading(false);
@@ -260,16 +260,16 @@ function IntakePage(): JSX.Element {
         </form>
       </section>
 
-      {story && (
+      {project && (
         <section className={styles.result}>
-          <h2>Saved story</h2>
-          <p className={styles.storyTitle}>{story.title}</p>
-          <p className={styles.storyMeta}>
-            Status: {story.status} · Responses captured:{' '}
-            {story.responses.length}
+          <h2>Saved project</h2>
+          <p className={styles.projectTitle}>{project.title}</p>
+          <p className={styles.projectMeta}>
+            Status: {project.status} · Responses captured:{' '}
+            {project.responses.length}
           </p>
           <ul className={styles.detailList}>
-            {story.responses.map((response) => (
+            {project.responses.map((response) => (
               <li key={response.answer.questionId}>
                 <strong>{response.question.prompt}</strong>
                 <div>
@@ -287,18 +287,18 @@ function IntakePage(): JSX.Element {
 }
 
 function StoryDetailsPage(): JSX.Element {
-  const { storyId } = useParams<{ storyId: string }>();
+  const { projectId } = useParams<{ projectId: string }>();
   return (
     <div className={styles.home}>
       <div className={styles.homeCard}>
-        <p className={styles.eyebrow}>Story detail</p>
-        <h1 className={styles.homeTitle}>Story {storyId}</h1>
+        <p className={styles.eyebrow}>Project detail</p>
+        <h1 className={styles.homeTitle}>Project {projectId}</h1>
         <p className={styles.lead}>
           Detailed view coming soon. Use the intake form to add more stories.
         </p>
         <div className={styles.homeActions}>
           <Link to="/" className={styles.primaryLink}>
-            Back to stories
+            Back to projects
           </Link>
         </div>
       </div>
@@ -311,7 +311,7 @@ export function App(): JSX.Element {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/intake" element={<IntakePage />} />
-      <Route path="/stories/:storyId" element={<StoryDetailsPage />} />
+      <Route path="/projects/:projectId" element={<StoryDetailsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

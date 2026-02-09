@@ -42,7 +42,7 @@ const normalizeResponses = (
 };
 
 app.get('/', (_req, res) => {
-  res.send('Welcome to the Story Intake API');
+  res.send('Welcome to the Project Intake API');
 });
 
 app.get('/health', (_req, res) => {
@@ -79,18 +79,18 @@ app.get('/questions', async (_req, res) => {
   }
 });
 
-app.get('/stories', async (_req, res) => {
+app.get('/projects', async (_req, res) => {
   const userId = TEST_USER_ID;
   try {
-    const stories = await db.getStoriesByUserId(userId);
-    return res.json({ stories });
+    const projects = await db.getProjectsByUserId(userId);
+    return res.json({ projects });
   } catch (error) {
-    console.error('Failed to fetch stories', error);
-    return res.status(500).json({ message: 'Unable to fetch stories' });
+    console.error('Failed to fetch projects', error);
+    return res.status(500).json({ message: 'Unable to fetch projects' });
   }
 });
 
-app.post('/stories', async (req, res) => {
+app.post('/projects', async (req, res) => {
   const { title, responses } = req.body ?? {};
   const userId = TEST_USER_ID;
   if (typeof title !== 'string' || title.trim().length === 0) {
@@ -99,17 +99,17 @@ app.post('/stories', async (req, res) => {
 
   try {
     const normalized = normalizeResponses(responses);
-    const story = await db.createStory({
+    const project = await db.createProject({
       userId,
       title: title.trim(),
       responses: normalized,
     });
-    return res.json(story);
+    return res.json(project);
   } catch (error) {
-    console.error('Failed to create story', error);
+    console.error('Failed to create project', error);
     return res
       .status(500)
-      .json({ message: 'Unable to save story', error: (error as Error).message });
+      .json({ message: 'Unable to save project', error: (error as Error).message });
   }
 });
 

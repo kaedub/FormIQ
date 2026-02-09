@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import type { PrismaClient } from '@prisma/client';
-import type { CreateStoryInput, QuestionType } from '@formiq/shared';
+import type { CreateProjectInput, QuestionType } from '@formiq/shared';
 
 export const QUESTION_FIXTURES: Array<{
   id: string;
@@ -44,10 +44,10 @@ export const DEFAULT_INTAKE_FORM_NAME = 'default_intake_form';
 export const resetDatabase = async (prisma: PrismaClient): Promise<void> => {
   await prisma.questionAnswer.deleteMany();
   await prisma.task.deleteMany();
-  await prisma.chapter.deleteMany();
+  await prisma.milestone.deleteMany();
   await prisma.promptExecution.deleteMany();
-  await prisma.storyEvent.deleteMany();
-  await prisma.story.deleteMany();
+  await prisma.projectEvent.deleteMany();
+  await prisma.project.deleteMany();
   await prisma.user.deleteMany();
   await prisma.intakeQuestion.deleteMany();
   await prisma.intakeForm.deleteMany();
@@ -85,9 +85,9 @@ export const createTestUser = async (
   });
 };
 
-export const buildStoryInput = (userId: string): CreateStoryInput => ({
+export const buildProjectInput = (userId: string): CreateProjectInput => ({
   userId,
-  title: 'Test story',
+  title: 'Test project',
   responses: QUESTION_FIXTURES.map((question, index) => ({
     questionId: question.id,
     values:

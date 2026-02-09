@@ -1,5 +1,9 @@
 import type OpenAI from 'openai';
-import type { ChapterDto, IntakeQuestionDto, StoryDto } from '@formiq/shared';
+import type {
+  IntakeQuestionDto,
+  MilestoneDto,
+  ProjectDto,
+} from '@formiq/shared';
 import type {
   AIService,
   AIServiceDependencies,
@@ -16,16 +20,16 @@ import {
 import {
   CHAPTER_OUTLINE_JSON_SCHEMA,
   FORM_DEFINITION_JSON_SCHEMA,
-  STORY_CONTEXT_JSON_SCHEMA,
+  PROJECT_CONTEXT_JSON_SCHEMA,
   TASK_SCHEDULE_JSON_SCHEMA,
 } from './schemas.js';
 import { requestStructuredJson } from './structured-output.js';
 import { parseChapterOutline, parseFormDefinition, parseTaskSchedule } from './utils.js';
 
-const buildStoryContextPayload = (story: StoryDto) => ({
-  story: {
-    title: story.title,
-    responses: story.responses.map((entry) => ({
+const buildStoryContextPayload = (project: ProjectDto) => ({
+  project: {
+    title: project.title,
+    responses: project.responses.map((entry) => ({
       question: [
         entry.question.prompt,
         entry.question.questionType !== 'free_text' && entry.question.options.length > 0
@@ -37,11 +41,11 @@ const buildStoryContextPayload = (story: StoryDto) => ({
   },
 });
 
-const buildChapterContext = (chapter: ChapterDto) => ({
-  title: chapter.title,
-  summary: chapter.summary,
-  position: chapter.position,
-  metadata: chapter.metadata ?? undefined,
+const buildChapterContext = (milestone: MilestoneDto) => ({
+  title: milestone.title,
+  summary: milestone.summary,
+  position: milestone.position,
+  metadata: milestone.metadata ?? undefined,
 });
 
 class OpenAIService implements AIService {
@@ -60,16 +64,16 @@ class OpenAIService implements AIService {
     });
   }
 
-  async generateChapterOutline(story: StoryDto): Promise<ChapterOutline> {
-    const storyContextPayload = buildStoryContextPayload(story);
+  async generateChapterOutline(project: ProjectDto): Promise<ChapterOutline> {
+    const projectContextPayload = buildStoryContextPayload(project);
 
     const userPrompt = [
-      `STORY_CONTEXT_JSON_SCHEMA: ${JSON.stringify(STORY_CONTEXT_JSON_SCHEMA, null, 2)}`,
+      `PROJECT_CONTEXT_JSON_SCHEMA: ${JSON.stringify(PROJECT_CONTEXT_JSON_SCHEMA, null, 2)}`,
       `CHAPTER_OUTLINE_JSON_SCHEMA: ${JSON.stringify(CHAPTER_OUTLINE_JSON_SCHEMA, null, 2)}`,
-      'STORY_CONTEXT_JSON:',
-      JSON.stringify(storyContextPayload, null, 2),
+      'PROJECT_CONTEXT_JSON:',
+      JSON.stringify(projectContextPayload, null, 2),
     ].join('\n');
-    console.log('Generating chapter outline with story context:', storyContextPayload);
+    console.log('Generating chapter outline with project context:', projectContextPayload);
     console.log('Using system prompt:', CHAPTER_OUTLINE_PROMPT);
     console.log("Using model:", DEFAULT_MODEL);
     console.log("Using user prompt", userPrompt);
@@ -86,20 +90,20 @@ class OpenAIService implements AIService {
   }
 
   async generateTasksForChapter(input: TaskGenerationContext): Promise<TaskSchedule> {
-    const storyContextPayload = buildStoryContextPayload(input.story);
-    const chapterContextPayload = buildChapterContext(input.chapter);
+    const projectContextPayload = buildStoryContextPayload(input.project);
+    const milestoneContextPayload = buildChapterContext(input.milestone);
 
     return requestStructuredJson({
       client: this.client,
       model: DEFAULT_MODEL,
       systemPrompt: TASK_GENERATION_PROMPT,
       userPrompt: [
-        `STORY_CONTEXT_JSON_SCHEMA: ${JSON.stringify(STORY_CONTEXT_JSON_SCHEMA, null, 2)}`,
+        `PROJECT_CONTEXT_JSON_SCHEMA: ${JSON.stringify(PROJECT_CONTEXT_JSON_SCHEMA, null, 2)}`,
         `TASK_SCHEDULE_JSON_SCHEMA: ${JSON.stringify(TASK_SCHEDULE_JSON_SCHEMA, null, 2)}`,
-        'STORY_CONTEXT_JSON:',
-        JSON.stringify(storyContextPayload, null, 2),
-        'CHAPTER_CONTEXT_JSON:',
-        JSON.stringify(chapterContextPayload, null, 2),
+        'PROJECT_CONTEXT_JSON:',
+        JSON.stringify(projectContextPayload, null, 2),
+        'MILESTONE_CONTEXT_JSON:',
+        JSON.stringify(milestoneContextPayload, null, 2),
       ].join('\n'),
       schemaName: 'task_schedule',
       schema: TASK_SCHEDULE_JSON_SCHEMA,

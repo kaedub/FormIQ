@@ -1,32 +1,32 @@
 import type { PrismaClient } from '@prisma/client';
 import type { DatabaseService, DatabaseServiceDependencies } from './types.js';
 import type {
-  CreateStoryInput,
+  CreateProjectInput,
   IntakeFormDto,
   IntakeFormQuestions,
-  StoryContextDto,
-  StoryDto,
-  StorySummaryDto,
+  ProjectContextDto,
+  ProjectDto,
+  ProjectSummaryDto,
 } from '@formiq/shared';
 import type {
   IntakeFormWithQuestions,
-  StoryWithContext,
-  StoryWithResponses,
+  ProjectWithContext,
+  ProjectWithResponses,
 } from './mappers.js';
 import {
-  mapChapterDto,
+  mapMilestoneDto,
   mapIntakeFormDto,
   mapPromptExecutionDto,
-  mapStoryDto,
-  mapStoryEventDto,
+  mapProjectDto,
+  mapProjectEventDto,
   mapTaskDto,
 } from './mappers.js';
 
 class PrismaDatabaseService implements DatabaseService {
   constructor(private readonly db: PrismaClient) {}
 
-  async createStory(input: CreateStoryInput): Promise<StoryDto> {
-    const story = (await this.db.story.create({
+  async createProject(input: CreateProjectInput): Promise<ProjectDto> {
+    const project = (await this.db.project.create({
       data: {
         userId: input.userId,
         title: input.title,
@@ -52,18 +52,18 @@ class PrismaDatabaseService implements DatabaseService {
           },
         },
       },
-    })) as StoryWithResponses;
+    })) as ProjectWithResponses;
 
-    return mapStoryDto(story);
+    return mapProjectDto(project);
   }
 
-  async getStoryById(
-    storyId: string,
+  async getProjectById(
+    projectId: string,
     userId: string,
-  ): Promise<StoryDto | null> {
-    const story = (await this.db.story.findFirst({
+  ): Promise<ProjectDto | null> {
+    const project = (await this.db.project.findFirst({
       where: {
-        id: storyId,
+        id: projectId,
         userId,
       },
       include: {
@@ -78,18 +78,18 @@ class PrismaDatabaseService implements DatabaseService {
           },
         },
       },
-    })) as StoryWithResponses | null;
+    })) as ProjectWithResponses | null;
 
-    return story ? mapStoryDto(story) : null;
+    return project ? mapProjectDto(project) : null;
   }
 
-  async getStoryContext(
-    storyId: string,
+  async getProjectContext(
+    projectId: string,
     userId: string,
-  ): Promise<StoryContextDto> {
-    const story = (await this.db.story.findFirst({
+  ): Promise<ProjectContextDto> {
+    const project = (await this.db.project.findFirst({
       where: {
-        id: storyId,
+        id: projectId,
         userId,
       },
       include: {
@@ -103,7 +103,7 @@ class PrismaDatabaseService implements DatabaseService {
             },
           },
         },
-        chapters: {
+        milestones: {
           include: {
             tasks: true,
           },
@@ -111,23 +111,25 @@ class PrismaDatabaseService implements DatabaseService {
         promptExecutions: true,
         events: true,
       },
-    })) as StoryWithContext | null;
+    })) as ProjectWithContext | null;
 
-    if (!story) {
-      throw new Error(`Story ${storyId} not found for user ${userId}`);
+    if (!project) {
+      throw new Error(`Project ${projectId} not found for user ${userId}`);
     }
 
     return {
-      story: mapStoryDto(story as StoryWithResponses),
-      chapters: story.chapters.map(mapChapterDto),
-      tasks: story.chapters.flatMap((chapter) => chapter.tasks.map(mapTaskDto)),
-      promptExecutions: story.promptExecutions.map(mapPromptExecutionDto),
-      events: story.events.map(mapStoryEventDto),
+      project: mapProjectDto(project as ProjectWithResponses),
+      milestones: project.milestones.map(mapMilestoneDto),
+      tasks: project.milestones.flatMap((milestone) =>
+        milestone.tasks.map(mapTaskDto),
+      ),
+      promptExecutions: project.promptExecutions.map(mapPromptExecutionDto),
+      events: project.events.map(mapProjectEventDto),
     };
   }
 
-  async getStoriesByUserId(userId: string): Promise<StorySummaryDto[]> {
-    const stories = await this.db.story.findMany({
+  async getProjectsByUserId(userId: string): Promise<ProjectSummaryDto[]> {
+    const projects = await this.db.project.findMany({
       where: { userId },
       select: {
         id: true,
@@ -136,14 +138,14 @@ class PrismaDatabaseService implements DatabaseService {
       },
     });
 
-    if (stories.length === 0) {
-      throw new Error(`No stories found for user ${userId}`);
+    if (projects.length === 0) {
+      throw new Error(`No projects found for user ${userId}`);
     }
 
-    return stories.map((story) => ({
-      id: story.id,
-      title: story.title,
-      status: story.status,
+    return projects.map((project) => ({
+      id: project.id,
+      title: project.title,
+      status: project.status,
     }));
   }
 

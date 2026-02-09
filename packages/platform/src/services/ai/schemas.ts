@@ -21,12 +21,12 @@ export const FORM_DEFINITION_JSON_SCHEMA = {
   },
 } as const;
 
-export const STORY_CONTEXT_JSON_SCHEMA = {
+export const PROJECT_CONTEXT_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['story'],
+  required: ['project'],
   properties: {
-    story: {
+    project: {
       type: 'object',
       additionalProperties: false,
       required: ['title', 'responses'],

@@ -5,15 +5,15 @@ export interface QuestionResponseInput {
   values: string[];
 }
 
-export interface CreateStoryInput {
+export interface CreateProjectInput {
   userId: string;
   title: string;
   responses: QuestionResponseInput[];
 }
 
-export type StoryStatus = 'draft' | 'generating' | 'ready';
+export type ProjectStatus = 'draft' | 'generating' | 'ready';
 
-export type ChapterStatus = 'locked' | 'unlocked' | 'completed';
+export type MilestoneStatus = 'locked' | 'unlocked' | 'completed';
 
 export type TaskStatus = 'locked' | 'unlocked' | 'completed';
 
@@ -38,7 +38,7 @@ export interface IntakeFormQuestions {
 
 export interface QuestionAnswerDto {
   questionId: string;
-  storyId: string;
+  projectId: string;
   values: string[];
   answeredAt: string;
 }
@@ -48,21 +48,21 @@ export interface QuestionResponseDto {
   answer: QuestionAnswerDto;
 }
 
-export interface ChapterDto {
+export interface MilestoneDto {
   id: string;
-  storyId: string;
+  projectId: string;
   title: string;
   summary: string;
   context?: unknown;
   position: number;
-  status: ChapterStatus;
+  status: MilestoneStatus;
   generatedAt?: string;
   metadata?: unknown;
 }
 
 export interface TaskDto {
   id: string;
-  chapterId: string;
+  milestoneId: string;
   title: string;
   description: string;
   position: number;
@@ -72,27 +72,27 @@ export interface TaskDto {
   metadata?: unknown;
 }
 
-export interface StoryDto {
+export interface ProjectDto {
   id: string;
   userId: string;
   title: string;
-  status: StoryStatus;
+  status: ProjectStatus;
   generatedAt?: string;
   createdAt: string;
   updatedAt: string;
   responses: QuestionResponseDto[];
 }
 
-export interface StorySummaryDto {
+export interface ProjectSummaryDto {
   id: string;
   title: string;
-  status?: StoryStatus;
+  status?: ProjectStatus;
 }
 
 export type PromptExecutionStage =
-  | 'story_context'
-  | 'chapter_outline'
-  | 'chapter_validation'
+  | 'project_context'
+  | 'milestone_outline'
+  | 'milestone_validation'
   | 'task_generation'
   | 'task_validation';
 
@@ -100,8 +100,8 @@ export type PromptExecutionStatus = 'pending' | 'success' | 'failed';
 
 export interface PromptExecutionDto {
   id: string;
-  storyId: string;
-  chapterId?: string;
+  projectId: string;
+  milestoneId?: string;
   taskId?: string;
   templateId?: string;
   stage: PromptExecutionStage;
@@ -113,31 +113,31 @@ export interface PromptExecutionDto {
   createdAt: string;
 }
 
-export type StoryEventType =
+export type ProjectEventType =
   | 'status_change'
-  | 'chapter_generated'
+  | 'milestone_generated'
   | 'task_generated'
   | 'task_completed';
 
-export interface StoryEventDto {
+export interface ProjectEventDto {
   id: string;
-  storyId: string;
-  eventType: StoryEventType;
+  projectId: string;
+  eventType: ProjectEventType;
   payload?: unknown;
   createdAt: string;
 }
 
-export interface StoryContextDto {
-  story: StoryDto;
-  chapters: ChapterDto[];
+export interface ProjectContextDto {
+  project: ProjectDto;
+  milestones: MilestoneDto[];
   tasks: TaskDto[];
   promptExecutions: PromptExecutionDto[];
-  events: StoryEventDto[];
+  events: ProjectEventDto[];
 }
 
-export interface StoryResponse {
+export interface ProjectResponse {
   id: string;
   title: string;
-  status: StoryStatus;
+  status: ProjectStatus;
   responses: QuestionResponseDto[];
 }

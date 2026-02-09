@@ -1,11 +1,11 @@
 import type { PrismaClient } from '@prisma/client';
 import type {
-  CreateStoryInput,
+  CreateProjectInput,
   IntakeFormDto,
   IntakeFormQuestions,
-  StoryContextDto,
-  StoryDto,
-  StorySummaryDto,
+  ProjectContextDto,
+  ProjectDto,
+  ProjectSummaryDto,
 } from '@formiq/shared';
 
 export type DatabaseServiceDependencies = {
@@ -13,10 +13,10 @@ export type DatabaseServiceDependencies = {
 };
 
 export interface DatabaseService {
-  createStory(input: CreateStoryInput): Promise<StoryDto>;
-  getStoryById(storyId: string, userId: string): Promise<StoryDto | null>;
-  getStoryContext(storyId: string, userId: string): Promise<StoryContextDto>;
-  getStoriesByUserId(userId: string): Promise<StorySummaryDto[]>;
+  createProject(input: CreateProjectInput): Promise<ProjectDto>;
+  getProjectById(projectId: string, userId: string): Promise<ProjectDto | null>;
+  getProjectContext(projectId: string, userId: string): Promise<ProjectContextDto>;
+  getProjectsByUserId(userId: string): Promise<ProjectSummaryDto[]>;
   createIntakeForm(
     intakeForm: IntakeFormQuestions,
   ): Promise<IntakeFormDto>;

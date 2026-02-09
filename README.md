@@ -6,7 +6,7 @@
 ## Workspace Map (Nx + Yarn workspaces)
 
 - `apps/web` (`@formiq/web`): React/Vite UI for goal intake, questionnaire, and roadmap view/update (targets to be added).
-- `apps/api` (`@formiq/api`): Express API for auth/story endpoints and Temporal kicks; serves compiled output via `nx run api:serve`.
+- `apps/api` (`@formiq/api`): Express API for auth/project endpoints and Temporal kicks; serves compiled output via `nx run api:serve`.
 - `packages/platform` (`@formiq/platform`): Data/integration layer (Prisma schema/client, PG adapter, env loading).
 - `packages/shared` (`@formiq/shared`): Shared types/DTOs used across API, UI, and LLM payloads.
 - `packages/temporal/workflows` (`@formiq/workflows`) and `packages/temporal/activities` (`@formiq/activities`): Temporal workflow orchestration and activities that call into `@formiq/platform`.

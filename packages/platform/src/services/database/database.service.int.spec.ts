@@ -11,7 +11,7 @@ import { type PrismaClient, QuestionType } from '@prisma/client';
 import { createDatabaseService } from './service.js';
 import type { DatabaseService } from './types.js';
 import {
-  buildStoryInput,
+  buildProjectInput,
   createTestUser,
   QUESTION_FIXTURES,
   resetDatabase,
@@ -37,11 +37,11 @@ describe('PrismaDatabaseService integration', () => {
     await resetDatabase(prisma);
   });
 
-  it('creates a story with ordered answers', async () => {
+  it('creates a project with ordered answers', async () => {
     const user = await createTestUser(prisma);
-    const input = buildStoryInput(user.id);
+    const input = buildProjectInput(user.id);
 
-    const result = await service.createStory(input);
+    const result = await service.createProject(input);
 
     expect(result.title).toBe(input.title);
     expect(result.responses).toHaveLength(QUESTION_FIXTURES.length);
@@ -62,51 +62,51 @@ describe('PrismaDatabaseService integration', () => {
     });
 
     const storedAnswers = await prisma.questionAnswer.findMany({
-      where: { storyId: result.id },
+      where: { projectId: result.id },
     });
     expect(storedAnswers).toHaveLength(QUESTION_FIXTURES.length);
   });
 
-  it('fails to create a story when question id is invalid', async () => {
+  it('fails to create a project when question id is invalid', async () => {
     const user = await createTestUser(prisma);
-    const input = buildStoryInput(user.id);
+    const input = buildProjectInput(user.id);
     const responses = input.responses.map((response, index) =>
       index === 0 ? { ...response, questionId: 'missing' } : response,
     );
     const invalidInput = { ...input, responses };
 
-    await expect(service.createStory(invalidInput)).rejects.toThrow();
+    await expect(service.createProject(invalidInput)).rejects.toThrow();
   });
 
-  it('fetches a story by id for the owning user', async () => {
+  it('fetches a project by id for the owning user', async () => {
     const user = await createTestUser(prisma);
-    const created = await service.createStory(buildStoryInput(user.id));
+    const created = await service.createProject(buildProjectInput(user.id));
 
-    const fetched = await service.getStoryById(created.id, user.id);
+    const fetched = await service.getProjectById(created.id, user.id);
 
     expect(fetched).not.toBeNull();
     expect(fetched?.id).toBe(created.id);
     expect(fetched?.responses.length).toBe(QUESTION_FIXTURES.length);
   });
 
-  it('returns null when fetching a story owned by another user', async () => {
+  it('returns null when fetching a project owned by another user', async () => {
     const owner = await createTestUser(prisma);
     const intruder = await createTestUser(prisma);
-    const created = await service.createStory(buildStoryInput(owner.id));
+    const created = await service.createProject(buildProjectInput(owner.id));
 
-    const fetched = await service.getStoryById(created.id, intruder.id);
+    const fetched = await service.getProjectById(created.id, intruder.id);
 
     expect(fetched).toBeNull();
   });
 
-  it('returns story context with chapters, tasks, prompt executions, and events', async () => {
+  it('returns project context with milestones, tasks, prompt executions, and events', async () => {
     const user = await createTestUser(prisma);
-    const story = await service.createStory(buildStoryInput(user.id));
+    const project = await service.createProject(buildProjectInput(user.id));
 
-    const chapter = await prisma.chapter.create({
+    const milestone = await prisma.milestone.create({
       data: {
-        storyId: story.id,
-        title: 'Chapter 1',
+        projectId: project.id,
+        title: 'Milestone 1',
         summary: 'Summary',
         position: 0,
         status: 'locked',
@@ -115,7 +115,7 @@ describe('PrismaDatabaseService integration', () => {
 
     await prisma.task.create({
       data: {
-        chapterId: chapter.id,
+        milestoneId: milestone.id,
         title: 'Task 1',
         description: 'Do something',
         position: 0,
@@ -125,52 +125,52 @@ describe('PrismaDatabaseService integration', () => {
 
     await prisma.promptExecution.create({
       data: {
-        storyId: story.id,
-        chapterId: chapter.id,
-        stage: 'story_context',
+        projectId: project.id,
+        milestoneId: milestone.id,
+        stage: 'project_context',
         status: 'success',
         input: { source: 'test' },
       },
     });
 
-    await prisma.storyEvent.create({
+    await prisma.projectEvent.create({
       data: {
-        storyId: story.id,
+        projectId: project.id,
         eventType: 'status_change',
         payload: { to: 'generating' },
       },
     });
 
-    const context = await service.getStoryContext(story.id, user.id);
+    const context = await service.getProjectContext(project.id, user.id);
 
-    expect(context.story.id).toBe(story.id);
-    expect(context.chapters).toHaveLength(1);
+    expect(context.project.id).toBe(project.id);
+    expect(context.milestones).toHaveLength(1);
     expect(context.tasks).toHaveLength(1);
     expect(context.promptExecutions).toHaveLength(1);
     expect(context.events).toHaveLength(1);
   });
 
-  it('throws when requesting context for a missing story', async () => {
+  it('throws when requesting context for a missing project', async () => {
     const user = await createTestUser(prisma);
 
     await expect(
-      service.getStoryContext('missing-story', user.id),
+      service.getProjectContext('missing-project', user.id),
     ).rejects.toThrow(/not found/i);
   });
 
-  it('lists stories for a given user', async () => {
+  it('lists projects for a given user', async () => {
     const owner = await createTestUser(prisma);
     const other = await createTestUser(prisma);
-    await service.createStory(buildStoryInput(owner.id));
-    await service.createStory(buildStoryInput(owner.id));
-    await service.createStory(buildStoryInput(other.id));
+    await service.createProject(buildProjectInput(owner.id));
+    await service.createProject(buildProjectInput(owner.id));
+    await service.createProject(buildProjectInput(other.id));
 
-    const stories = await service.getStoriesByUserId(owner.id);
+    const projects = await service.getProjectsByUserId(owner.id);
 
-    expect(stories).toHaveLength(2);
-    stories.forEach((story) => {
-      expect(typeof story.id).toBe('string');
-      expect(typeof story.title).toBe('string');
+    expect(projects).toHaveLength(2);
+    projects.forEach((project) => {
+      expect(typeof project.id).toBe('string');
+      expect(typeof project.title).toBe('string');
     });
   });
 

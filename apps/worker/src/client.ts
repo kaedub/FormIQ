@@ -1,7 +1,7 @@
 import { createAIService, createDatabaseService, getOpenAIClient, getPrismaClient } from '@formiq/platform';
 import type { IntakeFormDto } from '@formiq/shared';
 import type { PrismaClient } from '@prisma/client';
-import { DEFAULT_INTAKE_FORM_NAME, QUESTION_FIXTURES, buildStoryInput } from '../../../packages/platform/src/test/fixtures.js';
+import { DEFAULT_INTAKE_FORM_NAME, QUESTION_FIXTURES, buildProjectInput } from '../../../packages/platform/src/test/fixtures.js';
 
 const USER_ID = 'test-user-id';
 
@@ -48,13 +48,13 @@ const run = async (): Promise<void> => {
     }
   });
 
-  const storyInput = buildStoryInput(USER_ID);
-  console.log('\nCreating story with responses...');
-  const story = await databaseService.createStory(storyInput);
-  console.log('Created story:', { id: story.id, title: story.title, userId: story.userId });
+  const projectInput = buildProjectInput(USER_ID);
+  console.log('\nCreating project with responses...');
+  const project = await databaseService.createProject(projectInput);
+  console.log('Created project:', { id: project.id, title: project.title, userId: project.userId });
 
   console.log('\nGenerating chapter outline via AI service...');
-  const outline = await aiService.generateChapterOutline(story);
+  const outline = await aiService.generateChapterOutline(project);
 
   console.log('\nGenerated chapters (not persisted):');
   outline.chapters.forEach((chapter) => {

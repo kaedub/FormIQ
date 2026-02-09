@@ -1,5 +1,9 @@
 import type OpenAI from 'openai';
-import type { ChapterDto, IntakeQuestionDto, StoryDto } from '@formiq/shared';
+import type {
+  IntakeQuestionDto,
+  MilestoneDto,
+  ProjectDto,
+} from '@formiq/shared';
 
 export type AIServiceDependencies = {
   client: OpenAI;
@@ -39,12 +43,12 @@ export interface TaskSchedule {
 }
 
 export interface TaskGenerationContext {
-  story: StoryDto;
-  chapter: ChapterDto;
+  project: ProjectDto;
+  milestone: MilestoneDto;
 }
 
 export interface AIService {
   generateForm(): Promise<IntakeQuestionDto[]>;
-  generateChapterOutline(story: StoryDto): Promise<ChapterOutline>;
+  generateChapterOutline(project: ProjectDto): Promise<ChapterOutline>;
   generateTasksForChapter(input: TaskGenerationContext): Promise<TaskSchedule>;
 }
