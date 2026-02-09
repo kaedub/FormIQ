@@ -7,24 +7,24 @@ import type {
 import type {
   AIService,
   AIServiceDependencies,
-  ChapterOutline,
+  ProjectPlan,
   TaskGenerationContext,
   TaskSchedule,
 } from './types.js';
 import {
-  CHAPTER_OUTLINE_PROMPT,
   DEFAULT_MODEL,
+  PROJECT_PLAN_PROMPT,
   SYSTEM_PROMPT,
   TASK_GENERATION_PROMPT,
 } from './constants.js';
 import {
-  CHAPTER_OUTLINE_JSON_SCHEMA,
   FORM_DEFINITION_JSON_SCHEMA,
   PROJECT_CONTEXT_JSON_SCHEMA,
+  PROJECT_PLAN_JSON_SCHEMA,
   TASK_SCHEDULE_JSON_SCHEMA,
 } from './schemas.js';
 import { requestStructuredJson } from './structured-output.js';
-import { parseChapterOutline, parseFormDefinition, parseTaskSchedule } from './utils.js';
+import { parseFormDefinition, parseProjectPlan, parseTaskSchedule } from './utils.js';
 
 const buildStoryContextPayload = (project: ProjectDto) => ({
   project: {
@@ -64,32 +64,32 @@ class OpenAIService implements AIService {
     });
   }
 
-  async generateChapterOutline(project: ProjectDto): Promise<ChapterOutline> {
+  async generateProjectPlan(project: ProjectDto): Promise<ProjectPlan> {
     const projectContextPayload = buildStoryContextPayload(project);
 
     const userPrompt = [
       `PROJECT_CONTEXT_JSON_SCHEMA: ${JSON.stringify(PROJECT_CONTEXT_JSON_SCHEMA, null, 2)}`,
-      `CHAPTER_OUTLINE_JSON_SCHEMA: ${JSON.stringify(CHAPTER_OUTLINE_JSON_SCHEMA, null, 2)}`,
+      `PROJECT_PLAN_JSON_SCHEMA: ${JSON.stringify(PROJECT_PLAN_JSON_SCHEMA, null, 2)}`,
       'PROJECT_CONTEXT_JSON:',
       JSON.stringify(projectContextPayload, null, 2),
     ].join('\n');
-    console.log('Generating chapter outline with project context:', projectContextPayload);
-    console.log('Using system prompt:', CHAPTER_OUTLINE_PROMPT);
+    console.log('Generating project plan with project context:', projectContextPayload);
+    console.log('Using system prompt:', PROJECT_PLAN_PROMPT);
     console.log("Using model:", DEFAULT_MODEL);
     console.log("Using user prompt", userPrompt);
     return requestStructuredJson({
       client: this.client,
       model: DEFAULT_MODEL,
-      systemPrompt: CHAPTER_OUTLINE_PROMPT,
+      systemPrompt: PROJECT_PLAN_PROMPT,
       userPrompt,
-      schemaName: 'chapter_outline',
-      schema: CHAPTER_OUTLINE_JSON_SCHEMA,
-      description: 'FormIQ roadmap chapter outline with milestones',
-      validator: (content) => parseChapterOutline(content),
+      schemaName: 'project_plan',
+      schema: PROJECT_PLAN_JSON_SCHEMA,
+      description: 'FormIQ project milestone plan payload',
+      validator: (content) => parseProjectPlan(content),
     });
   }
 
-  async generateTasksForChapter(input: TaskGenerationContext): Promise<TaskSchedule> {
+  async generateTasksForMilestone(input: TaskGenerationContext): Promise<TaskSchedule> {
     const projectContextPayload = buildStoryContextPayload(input.project);
     const milestoneContextPayload = buildChapterContext(input.milestone);
 

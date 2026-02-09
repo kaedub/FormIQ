@@ -53,25 +53,18 @@ const run = async (): Promise<void> => {
   const project = await databaseService.createProject(projectInput);
   console.log('Created project:', { id: project.id, title: project.title, userId: project.userId });
 
-  console.log('\nGenerating chapter outline via AI service...');
-  const outline = await aiService.generateChapterOutline(project);
+  console.log('\nGenerating project milestone plan via AI service...');
+  const plan = await aiService.generateProjectPlan(project);
 
-  console.log('\nGenerated chapters (not persisted):');
-  outline.chapters.forEach((chapter) => {
-    console.log(`- [${chapter.position}] ${chapter.title}`);
-    console.log(`  Summary: ${chapter.summary}`);
-    if (chapter.milestones.length > 0) {
-      console.log('  Milestones:');
-      chapter.milestones.forEach((milestone, index) => {
-        console.log(`    ${index + 1}. ${milestone.title}`);
-        console.log(`       Description: ${milestone.description}`);
-        if (milestone.successCriteria.length > 0) {
-          console.log(`       Success Criteria: ${milestone.successCriteria.join('; ')}`);
-        }
-        if (milestone.estimatedDurationDays !== undefined) {
-          console.log(`       Estimated Days: ${milestone.estimatedDurationDays}`);
-        }
-      });
+  console.log('\nGenerated milestones (not persisted):');
+  plan.milestones.forEach((milestone, index) => {
+    console.log(`- ${index + 1}. ${milestone.title}`);
+    console.log(`   Description: ${milestone.description}`);
+    if (milestone.successCriteria.length > 0) {
+      console.log(`   Success Criteria: ${milestone.successCriteria.join('; ')}`);
+    }
+    if (milestone.estimatedDurationDays !== undefined) {
+      console.log(`   Estimated Days: ${milestone.estimatedDurationDays}`);
     }
   });
 };

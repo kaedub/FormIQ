@@ -1,11 +1,6 @@
 import type { IntakeQuestionDto } from '@formiq/shared';
 import { z } from 'zod';
-import type {
-  ChapterOutline,
-  ChapterOutlineItem,
-  GeneratedTask,
-  TaskSchedule,
-} from './types.js';
+import type { GeneratedTask, ProjectPlan, ProjectPlanMilestone, TaskSchedule } from './types.js';
 
 const questionTypeSchema = z.enum(['free_text', 'single_select', 'multi_select']);
 
@@ -21,22 +16,15 @@ const intakeFormSchema = z.object({
   questions: z.array(intakeQuestionSchema),
 });
 
-const chapterMilestoneSchema = z.object({
+const projectPlanMilestoneSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(1),
   successCriteria: z.array(z.string()).default([]),
   estimatedDurationDays: z.number().nonnegative().optional(),
 });
 
-const chapterSchema = z.object({
-  title: z.string().min(1),
-  summary: z.string().min(1),
-  position: z.number().int().nonnegative(),
-  milestones: z.array(chapterMilestoneSchema),
-});
-
-const chapterOutlineSchema = z.object({
-  chapters: z.array(chapterSchema),
+const projectPlanSchema = z.object({
+  milestones: z.array(projectPlanMilestoneSchema),
 });
 
 const taskSchema = z.object({
@@ -105,25 +93,22 @@ export const parseFormDefinition = (
   }));
 };
 
-export const parseChapterOutline = (
+export const parseProjectPlan = (
   content: string | null,
-): ChapterOutline => {
-  const parsed = parseWithSchema(chapterOutlineSchema, content, 'chapter outline');
+): ProjectPlan => {
+  const parsed = parseWithSchema(projectPlanSchema, content, 'project plan');
 
   return {
-    chapters: parsed.chapters.map((chapter): ChapterOutlineItem => ({
-      title: chapter.title,
-      summary: chapter.summary,
-      position: chapter.position,
-      milestones: chapter.milestones.map((milestone) => ({
+    milestones: parsed.milestones.map(
+      (milestone): ProjectPlanMilestone => ({
         title: milestone.title,
         description: milestone.description,
         successCriteria: milestone.successCriteria ?? [],
         ...(milestone.estimatedDurationDays !== undefined
           ? { estimatedDurationDays: milestone.estimatedDurationDays }
           : {}),
-      })),
-    })),
+      }),
+    ),
   };
 };
 

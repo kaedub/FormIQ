@@ -49,35 +49,22 @@ export const PROJECT_CONTEXT_JSON_SCHEMA = {
   },
 } as const;
 
-export const CHAPTER_OUTLINE_JSON_SCHEMA = {
+export const PROJECT_PLAN_JSON_SCHEMA = {
   type: 'object',
   additionalProperties: false,
-  required: ['chapters'],
+  required: ['milestones'],
   properties: {
-    chapters: {
+    milestones: {
       type: 'array',
       items: {
         type: 'object',
         additionalProperties: false,
-        required: ['title', 'summary', 'position', 'milestones'],
+        required: ['title', 'description'],
         properties: {
           title: { type: 'string', minLength: 1 },
-          summary: { type: 'string', minLength: 1 },
-          position: { type: 'integer', minimum: 0 },
-          milestones: {
-            type: 'array',
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              required: ['title', 'description'],
-              properties: {
-                title: { type: 'string', minLength: 1 },
-                description: { type: 'string', minLength: 1 },
-                successCriteria: { type: 'array', items: { type: 'string' } },
-                estimatedDurationDays: { type: 'number', minimum: 0 },
-              },
-            },
-          },
+          description: { type: 'string', minLength: 1 },
+          successCriteria: { type: 'array', items: { type: 'string' } },
+          estimatedDurationDays: { type: 'number', minimum: 0 },
         },
       },
     },

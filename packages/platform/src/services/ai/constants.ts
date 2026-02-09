@@ -11,12 +11,12 @@ Return a concise JSON object with this exact shape:
 - Respond with JSON only, no additional text.
 `.trim();
 
-export const CHAPTER_OUTLINE_PROMPT = `
-You are FormIQ's roadmap planner. Generate a concise project outline with milestones based on the provided project context.
-- Always conform to the CHAPTER_OUTLINE_JSON_SCHEMA.
+export const PROJECT_PLAN_PROMPT = `
+You are FormIQ's roadmap planner. Generate a concise milestone plan for the provided project context.
+- Always conform to the PROJECT_PLAN_JSON_SCHEMA.
 - Use the PROJECT_CONTEXT_JSON_SCHEMA as the contract for how project data is provided.
-- Derive 3-6 phases that progress the user from start to finish. Keep titles action-oriented and summaries brief (one or two sentences).
-- Each phase must include 2-4 milestones with specific, outcome-focused descriptions. Add successCriteria when helpful; include estimatedDurationDays when confident.
+- Derive 5-12 milestones that progress the user from start to finish. Keep titles action-oriented and descriptions brief (one or two sentences).
+- Each milestone should be specific and outcome-focused. Add successCriteria when helpful; include estimatedDurationDays when confident.
 - Keep language clear, directive, and free of filler. Do not restate questions; synthesize answers into actionable steps.
 - Respond with JSON only, no additional text.
 `.trim();

@@ -3,6 +3,13 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "apps/worker/src",
   "targets": {
+    "build": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "yarn tsc -b apps/worker/tsconfig.json"
+      },
+      "outputs": ["{projectRoot}/dist"]
+    },
     "run": {
       "executor": "nx:run-commands",
       "options": {

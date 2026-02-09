@@ -9,22 +9,15 @@ export type AIServiceDependencies = {
   client: OpenAI;
 };
 
-export interface ChapterOutlineMilestone {
+export interface ProjectPlanMilestone {
   title: string;
   description: string;
   successCriteria: string[];
   estimatedDurationDays?: number;
 }
 
-export interface ChapterOutlineItem {
-  title: string;
-  summary: string;
-  position: number;
-  milestones: ChapterOutlineMilestone[];
-}
-
-export interface ChapterOutline {
-  chapters: ChapterOutlineItem[];
+export interface ProjectPlan {
+  milestones: ProjectPlanMilestone[];
 }
 
 export interface GeneratedTask {
@@ -49,6 +42,6 @@ export interface TaskGenerationContext {
 
 export interface AIService {
   generateForm(): Promise<IntakeQuestionDto[]>;
-  generateChapterOutline(project: ProjectDto): Promise<ChapterOutline>;
-  generateTasksForChapter(input: TaskGenerationContext): Promise<TaskSchedule>;
+  generateProjectPlan(project: ProjectDto): Promise<ProjectPlan>;
+  generateTasksForMilestone(input: TaskGenerationContext): Promise<TaskSchedule>;
 }
