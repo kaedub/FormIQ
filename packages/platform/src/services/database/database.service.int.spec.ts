@@ -1,11 +1,4 @@
-import {
-  beforeAll,
-  afterAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-} from 'vitest';
+import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { type PrismaClient, QuestionType } from '@prisma/client';
 import { createDatabaseService } from './service.js';
@@ -55,7 +48,9 @@ describe('PrismaDatabaseService integration', () => {
       if (fixture.questionType === 'multi_select') {
         const [firstOption] = fixture.options;
         expect(firstOption).toBeDefined();
-        expect(response.answer.values).toEqual(firstOption ? [firstOption] : []);
+        expect(response.answer.values).toEqual(
+          firstOption ? [firstOption] : [],
+        );
       } else {
         expect(response.answer.values).toEqual([`Answer ${index + 1}`]);
       }

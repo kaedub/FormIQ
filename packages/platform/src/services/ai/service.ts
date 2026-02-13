@@ -1,115 +1,55 @@
 import type OpenAI from 'openai';
-import type {
-  IntakeQuestionDto,
-  MilestoneDto,
-  ProjectDto,
-} from '@formiq/shared';
+import type { ProjectDto } from '@formiq/shared';
+import {
+  CoarseTaskScheduleGenerationRequest,
+  IntakeFormDefinitionRequest,
+  ProjectOutlineGenerationRequest,
+} from './generation-requests.js';
+import { CoarseTaskScheduleContext, ProjectContext } from './contexts.js';
 import type {
   AIService,
   AIServiceDependencies,
-  ProjectPlan,
-  TaskGenerationContext,
+  CoarseTaskScheduleGenerationContext,
+  IntakeFormDefintion,
+  ProjectOutline,
   TaskSchedule,
 } from './types.js';
-import {
-  DEFAULT_MODEL,
-  PROJECT_PLAN_PROMPT,
-  SYSTEM_PROMPT,
-  TASK_GENERATION_PROMPT,
-} from './constants.js';
-import {
-  FORM_DEFINITION_JSON_SCHEMA,
-  PROJECT_CONTEXT_JSON_SCHEMA,
-  PROJECT_PLAN_JSON_SCHEMA,
-  TASK_SCHEDULE_JSON_SCHEMA,
-} from './schemas.js';
-import { requestStructuredJson } from './structured-output.js';
-import { parseFormDefinition, parseProjectPlan, parseTaskSchedule } from './utils.js';
-
-const buildStoryContextPayload = (project: ProjectDto) => ({
-  project: {
-    title: project.title,
-    responses: project.responses.map((entry) => ({
-      question: [
-        entry.question.prompt,
-        entry.question.questionType !== 'free_text' && entry.question.options.length > 0
-          ? `Options: ${entry.question.options.join(', ')}`
-          : null,
-      ].filter((part): part is string => Boolean(part)).join(' '),
-      answers: entry.answer.values,
-    })),
-  },
-});
-
-const buildChapterContext = (milestone: MilestoneDto) => ({
-  title: milestone.title,
-  summary: milestone.summary,
-  position: milestone.position,
-  metadata: milestone.metadata ?? undefined,
-});
 
 class OpenAIService implements AIService {
   constructor(private readonly client: OpenAI) {}
 
-  async generateForm(): Promise<IntakeQuestionDto[]> {
-    return requestStructuredJson({
-      client: this.client,
-      model: DEFAULT_MODEL,
-      systemPrompt: SYSTEM_PROMPT,
-      userPrompt: 'Generate an intake form JSON payload.',
-      schemaName: 'intake_form',
-      schema: FORM_DEFINITION_JSON_SCHEMA,
-      description: 'FormIQ intake form definition payload',
-      validator: (content) => parseFormDefinition(content),
-    });
+  async generateForm(): Promise<IntakeFormDefintion> {
+    const request = new IntakeFormDefinitionRequest(this.client);
+    const response = await request.execute();
+    return response;
   }
 
-  async generateProjectPlan(project: ProjectDto): Promise<ProjectPlan> {
-    const projectContextPayload = buildStoryContextPayload(project);
-
-    const userPrompt = [
-      `PROJECT_CONTEXT_JSON_SCHEMA: ${JSON.stringify(PROJECT_CONTEXT_JSON_SCHEMA, null, 2)}`,
-      `PROJECT_PLAN_JSON_SCHEMA: ${JSON.stringify(PROJECT_PLAN_JSON_SCHEMA, null, 2)}`,
-      'PROJECT_CONTEXT_JSON:',
-      JSON.stringify(projectContextPayload, null, 2),
-    ].join('\n');
-    console.log('Generating project plan with project context:', projectContextPayload);
-    console.log('Using system prompt:', PROJECT_PLAN_PROMPT);
-    console.log("Using model:", DEFAULT_MODEL);
-    console.log("Using user prompt", userPrompt);
-    return requestStructuredJson({
-      client: this.client,
-      model: DEFAULT_MODEL,
-      systemPrompt: PROJECT_PLAN_PROMPT,
-      userPrompt,
-      schemaName: 'project_plan',
-      schema: PROJECT_PLAN_JSON_SCHEMA,
-      description: 'FormIQ project milestone plan payload',
-      validator: (content) => parseProjectPlan(content),
-    });
+  async generateProjectOutline(project: ProjectDto): Promise<ProjectOutline> {
+    const projectContext = new ProjectContext(project);
+    const request = new ProjectOutlineGenerationRequest(
+      this.client,
+      projectContext,
+    );
+    const projectOutline = await request.execute();
+    // TODO: validate response
+    return projectOutline;
   }
 
-  async generateTasksForMilestone(input: TaskGenerationContext): Promise<TaskSchedule> {
-    const projectContextPayload = buildStoryContextPayload(input.project);
-    const milestoneContextPayload = buildChapterContext(input.milestone);
-
-    return requestStructuredJson({
-      client: this.client,
-      model: DEFAULT_MODEL,
-      systemPrompt: TASK_GENERATION_PROMPT,
-      userPrompt: [
-        `PROJECT_CONTEXT_JSON_SCHEMA: ${JSON.stringify(PROJECT_CONTEXT_JSON_SCHEMA, null, 2)}`,
-        `TASK_SCHEDULE_JSON_SCHEMA: ${JSON.stringify(TASK_SCHEDULE_JSON_SCHEMA, null, 2)}`,
-        'PROJECT_CONTEXT_JSON:',
-        JSON.stringify(projectContextPayload, null, 2),
-        'MILESTONE_CONTEXT_JSON:',
-        JSON.stringify(milestoneContextPayload, null, 2),
-      ].join('\n'),
-      schemaName: 'task_schedule',
-      schema: TASK_SCHEDULE_JSON_SCHEMA,
-      description: 'FormIQ daily task schedule payload',
-      validator: (content) => parseTaskSchedule(content),
-    });
+  async generateCoarseTaskSchedule(
+    input: CoarseTaskScheduleGenerationContext,
+  ): Promise<TaskSchedule> {
+    const projectContext = new ProjectContext(input.project);
+    const coarseContext = new CoarseTaskScheduleContext(
+      projectContext,
+      input.outline,
+    );
+    const request = new CoarseTaskScheduleGenerationRequest(
+      this.client,
+      coarseContext,
+    );
+    const taskSchedule = await request.execute();
+    // TODO: validate response
+    return taskSchedule;
   }
 }
 

@@ -1,6 +1,6 @@
 export const DEFAULT_MODEL = 'gpt-5-mini';
 
-export const SYSTEM_PROMPT = `
+export const INTAKE_FORM_PROMPT = `
 You are FormIQ's intake form generator.
 Return a concise JSON object with this exact shape:
 {"questions":[{"id":"...", "prompt":"...", "questionType":"free_text|single_select|multi_select", "options":["..."], "position":0}]}
@@ -18,6 +18,16 @@ You are FormIQ's roadmap planner. Generate a concise milestone plan for the prov
 - Derive 5-12 milestones that progress the user from start to finish. Keep titles action-oriented and descriptions brief (one or two sentences).
 - Each milestone should be specific and outcome-focused. Add successCriteria when helpful; include estimatedDurationDays when confident.
 - Keep language clear, directive, and free of filler. Do not restate questions; synthesize answers into actionable steps.
+- Respond with JSON only, no additional text.
+`.trim();
+
+export const COARSE_TASK_SCHEDULE_PROMPT = `
+You are FormIQ's coarse task scheduler. Generate a global, coarse-grained task_schedule across all milestones for the provided project context and project outline.
+- Always conform to the TASK_SCHEDULE_JSON_SCHEMA.
+- Use the PROJECT_CONTEXT_JSON_SCHEMA and PROJECT_PLAN_JSON_SCHEMA as the contracts for how project and outline data are provided.
+- Work at a coarse level: cluster work into tasks or epics that cover multiple days or day ranges rather than detailed daily steps.
+- Ensure coverage across all milestones, respecting their order, dependencies, durations, and constraints so the overall plan is realistic and achievable within the user's cadence.
+- Respect user constraints inferred from questions and answers (time available, preferences, constraints). Keep estimatedMinutes realistic at the level of coarse blocks of work.
 - Respond with JSON only, no additional text.
 `.trim();
 

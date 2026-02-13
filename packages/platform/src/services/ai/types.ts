@@ -1,38 +1,33 @@
 import type OpenAI from 'openai';
-import type {
-  IntakeQuestionDto,
-  MilestoneDto,
-  ProjectDto,
-} from '@formiq/shared';
+import { z } from 'zod';
+import type { MilestoneDto, ProjectDto } from '@formiq/shared';
+import {
+  intakeFormSchema,
+  projectPlanMilestoneSchema,
+  projectPlanSchema,
+  taskScheduleSchema,
+  taskSchema,
+} from './schemas.js';
 
 export type AIServiceDependencies = {
   client: OpenAI;
 };
 
-export interface ProjectPlanMilestone {
-  title: string;
-  description: string;
-  successCriteria: string[];
-  estimatedDurationDays?: number;
-}
+export type IntakeFormDefintion = z.infer<typeof intakeFormSchema>;
 
-export interface ProjectPlan {
-  milestones: ProjectPlanMilestone[];
-}
+export type ProjectOutlineMilestone = z.infer<
+  typeof projectPlanMilestoneSchema
+>;
 
-export interface GeneratedTask {
-  day: number;
-  title: string;
-  objective: string;
-  description: string;
-  body: string;
-  estimatedMinutes: number;
-  optionalChallenge?: string;
-  reflectionPrompt?: string;
-}
+export type ProjectOutline = z.infer<typeof projectPlanSchema>;
 
-export interface TaskSchedule {
-  tasks: GeneratedTask[];
+export type GeneratedTask = z.infer<typeof taskSchema>;
+
+export type TaskSchedule = z.infer<typeof taskScheduleSchema>;
+
+export interface CoarseTaskScheduleGenerationContext {
+  project: ProjectDto;
+  outline: ProjectOutline;
 }
 
 export interface TaskGenerationContext {
@@ -41,7 +36,10 @@ export interface TaskGenerationContext {
 }
 
 export interface AIService {
-  generateForm(): Promise<IntakeQuestionDto[]>;
-  generateProjectPlan(project: ProjectDto): Promise<ProjectPlan>;
-  generateTasksForMilestone(input: TaskGenerationContext): Promise<TaskSchedule>;
+  generateForm(): Promise<IntakeFormDefintion>;
+  generateProjectOutline(project: ProjectDto): Promise<ProjectOutline>;
+  generateCoarseTaskSchedule(
+    input: CoarseTaskScheduleGenerationContext,
+  ): Promise<TaskSchedule>;
+  // generateTasksForMilestone(input: TaskGenerationContext): Promise<TaskSchedule>;
 }

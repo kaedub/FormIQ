@@ -36,13 +36,6 @@ enum ProjectStatus {
   ready
 }
 
-enum PromptPurpose {
-  goal_context
-  chapter_generation
-  task_generation
-  validation
-}
-
 enum PromptExecutionStage {
   project_context
   milestone_outline
@@ -150,7 +143,7 @@ model PromptTemplate {
   title            String
   prompt           String
   schema           Json?
-  purpose          PromptPurpose
+  stage            PromptExecutionStage
   version          Int               @default(1)
   metadata         Json?
   promptExecutions PromptExecution[]

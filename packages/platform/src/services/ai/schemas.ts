@@ -1,105 +1,88 @@
-export const FORM_DEFINITION_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['questions'],
-  properties: {
-    questions: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['id', 'prompt', 'questionType', 'options', 'position'],
-        properties: {
-          id: { type: 'string', minLength: 1 },
-          prompt: { type: 'string', minLength: 1 },
-          questionType: { type: 'string', enum: ['free_text', 'single_select', 'multi_select'] },
-          options: { type: 'array', items: { type: 'string' } },
-          position: { type: 'integer', minimum: 0 },
-        },
-      },
-    },
-  },
-} as const;
+import { z } from 'zod';
 
-export const PROJECT_CONTEXT_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['project'],
-  properties: {
-    project: {
-      type: 'object',
-      additionalProperties: false,
-      required: ['title', 'responses'],
-      properties: {
-        title: { type: 'string', minLength: 1 },
-        responses: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            required: ['question', 'answers'],
-            properties: {
-              question: { type: 'string', minLength: 1 },
-              answers: { type: 'array', items: { type: 'string' } },
-            },
-          },
-        },
-      },
-    },
-  },
-} as const;
+const questionTypeSchema = z.enum([
+  'free_text',
+  'single_select',
+  'multi_select',
+]);
 
-export const PROJECT_PLAN_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['milestones'],
-  properties: {
-    milestones: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: ['title', 'description'],
-        properties: {
-          title: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          successCriteria: { type: 'array', items: { type: 'string' } },
-          estimatedDurationDays: { type: 'number', minimum: 0 },
-        },
-      },
-    },
-  },
-} as const;
+export const intakeQuestionSchema = z
+  .object({
+    id: z.string().min(1),
+    prompt: z.string().min(1),
+    questionType: questionTypeSchema,
+    options: z.array(z.string()),
+    position: z.number().int().nonnegative(),
+  })
+  .strict();
 
-export const TASK_SCHEDULE_JSON_SCHEMA = {
-  type: 'object',
-  additionalProperties: false,
-  required: ['tasks'],
-  properties: {
-    tasks: {
-      type: 'array',
-      items: {
-        type: 'object',
-        additionalProperties: false,
-        required: [
-          'day',
-          'title',
-          'objective',
-          'description',
-          'body',
-          'estimatedMinutes',
-        ],
-        properties: {
-          day: { type: 'integer', minimum: 1 },
-          title: { type: 'string', minLength: 1 },
-          objective: { type: 'string', minLength: 1 },
-          description: { type: 'string', minLength: 1 },
-          body: { type: 'string', minLength: 1 },
-          estimatedMinutes: { type: 'number', minimum: 1 },
-          optionalChallenge: { type: 'string', minLength: 1 },
-          reflectionPrompt: { type: 'string', minLength: 1 },
-        },
-      },
-    },
-  },
-} as const;
+export const intakeFormSchema = z
+  .object({
+    questions: z.array(intakeQuestionSchema),
+  })
+  .strict();
+
+export const projectContextSchema = z
+  .object({
+    project: z
+      .object({
+        title: z.string().min(1),
+        responses: z.array(
+          z
+            .object({
+              question: z.string().min(1),
+              answers: z.array(z.string()),
+            })
+            .strict(),
+        ),
+      })
+      .strict(),
+  })
+  .strict();
+
+export const projectPlanMilestoneSchema = z
+  .object({
+    title: z.string().min(1),
+    description: z.string().min(1),
+  })
+  .strict();
+
+export const projectPlanSchema = z
+  .object({
+    milestones: z.array(projectPlanMilestoneSchema),
+  })
+  .strict();
+
+export const taskSchema = z
+  .object({
+    day: z.number().int().positive(),
+    title: z.string().min(1),
+    objective: z.string().min(1),
+    body: z.string().min(1),
+    estimatedMinutes: z.number().positive(),
+  })
+  .strict();
+
+export const taskScheduleSchema = z
+  .object({
+    tasks: z.array(taskSchema),
+  })
+  .strict();
+
+export const coarseTaskScheduleContextSchema = z
+  .object({
+    projectContext: projectContextSchema,
+    projectOutline: projectPlanSchema,
+  })
+  .strict();
+
+// export const FORM_DEFINITION_JSON_SCHEMA: JsonSchema = toJsonSchema(intakeFormSchema, 'intake_form');
+
+// export const PROJECT_CONTEXT_JSON_SCHEMA: JsonSchema = toJsonSchema(
+//   projectContextSchema,
+//   'project_context',
+// );
+
+// export const PROJECT_PLAN_JSON_SCHEMA: JsonSchema = toJsonSchema(projectPlanSchema, 'project_plan');
+
+// export const TASK_SCHEDULE_JSON_SCHEMA: JsonSchema = toJsonSchema(taskScheduleSchema, 'task_schedule');

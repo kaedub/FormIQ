@@ -1,7 +1,11 @@
-import { createAIService, createDatabaseService, getOpenAIClient, getPrismaClient } from '@formiq/platform';
-import type { IntakeFormDto } from '@formiq/shared';
+import {
+  createAIService,
+  createDatabaseService,
+  getOpenAIClient,
+  getPrismaClient,
+} from '@formiq/platform';
+import type { CreateProjectInput } from '@formiq/shared';
 import type { PrismaClient } from '@prisma/client';
-import { DEFAULT_INTAKE_FORM_NAME, QUESTION_FIXTURES, buildProjectInput } from '../../../packages/platform/src/test/fixtures.js';
 
 const USER_ID = 'test-user-id';
 
@@ -17,20 +21,6 @@ const ensureTestUser = async (prisma: PrismaClient): Promise<void> => {
   });
 };
 
-const ensureIntakeForm = async (
-  dbService: ReturnType<typeof createDatabaseService>,
-): Promise<IntakeFormDto> => {
-  const existingForm = await dbService.getIntakeFormByName(DEFAULT_INTAKE_FORM_NAME);
-  if (existingForm) {
-    return existingForm;
-  }
-
-  return dbService.createIntakeForm({
-    name: DEFAULT_INTAKE_FORM_NAME,
-    questions: QUESTION_FIXTURES,
-  });
-};
-
 const run = async (): Promise<void> => {
   console.log('Starting service client...');
   const prisma = getPrismaClient();
@@ -38,34 +28,75 @@ const run = async (): Promise<void> => {
   const aiService = createAIService({ client: getOpenAIClient() });
 
   await ensureTestUser(prisma);
-  const intakeForm = await ensureIntakeForm(databaseService);
+  // const intakeForm = await databaseService.getIntakeFormByName('goal_intake_v1');
 
-  console.log('Using intake form:', intakeForm.name);
-  intakeForm.questions.forEach((question, index) => {
-    console.log(`${index + 1}. [${question.questionType}] ${question.prompt}`);
-    if (question.options.length > 0) {
-      console.log(`   Options: ${question.options.join(', ')}`);
-    }
-  });
+  const projectInput: CreateProjectInput = {
+    userId: USER_ID,
+    title: 'Test Project',
+    responses: [],
+  };
 
-  const projectInput = buildProjectInput(USER_ID);
+  projectInput.responses.push(
+    {
+      questionId: 'goal_main_win',
+      values: [
+        'I want to learn how to produce electronic music well enough to release a small 3-4 track EP within the next 6 months.',
+      ],
+    },
+    {
+      questionId: 'existing_resources',
+      values: [
+        'I have a laptop, decent headphones, a small MIDI keyboard, a quiet room to work in, and a basic understanding of music theory and rhythm.',
+      ],
+    },
+    {
+      questionId: 'time_commitment',
+      values: [
+        'I can commit 5-7 hours per week, mostly on weekday evenings and a longer session on the weekend.',
+      ],
+    },
+    {
+      questionId: 'constraints',
+      values: [
+        'I live in an apartment so I need to keep noise reasonable (mostly headphones), I am on a tight budget and prefer free or low-cost software, and I use a Mac so tools should be macOS-compatible.',
+      ],
+    },
+    {
+      questionId: 'success_signals',
+      values: [
+        'I can produce and mix a complete electronic track on my own without following a tutorial step-by-step, I release an EP on a streaming platform, and a handful of friends say they genuinely enjoy listening to it.',
+      ],
+    },
+  );
+
   console.log('\nCreating project with responses...');
   const project = await databaseService.createProject(projectInput);
-  console.log('Created project:', { id: project.id, title: project.title, userId: project.userId });
+  console.log('Created project:', {
+    id: project.id,
+    title: project.title,
+    userId: project.userId,
+  });
 
-  console.log('\nGenerating project milestone plan via AI service...');
-  const plan = await aiService.generateProjectPlan(project);
+  console.log('\nGenerating project outline via AI service...');
+  const outline = await aiService.generateProjectOutline(project);
 
-  console.log('\nGenerated milestones (not persisted):');
-  plan.milestones.forEach((milestone, index) => {
+  console.log('\nGenerated milestones:');
+  outline.milestones.forEach((milestone, index) => {
     console.log(`- ${index + 1}. ${milestone.title}`);
     console.log(`   Description: ${milestone.description}`);
-    if (milestone.successCriteria.length > 0) {
-      console.log(`   Success Criteria: ${milestone.successCriteria.join('; ')}`);
-    }
-    if (milestone.estimatedDurationDays !== undefined) {
-      console.log(`   Estimated Days: ${milestone.estimatedDurationDays}`);
-    }
+  });
+
+  console.log('\nGenerating coarse task schedule via AI service...');
+  const coarseTaskSchedule = await aiService.generateCoarseTaskSchedule({
+    project,
+    outline,
+  });
+
+  console.log('\nGenerated coarse task schedule:');
+  coarseTaskSchedule.tasks.forEach((task) => {
+    console.log(
+      `- Day ${task.day}: ${task.title} (${task.estimatedMinutes} minutes)`,
+    );
   });
 };
 

@@ -13,9 +13,7 @@ const db = createDatabaseService({ db: prisma });
 const DEFAULT_FORM_NAME = 'goal_intake_v1';
 const TEST_USER_ID = 'test-user-id';
 
-const normalizeResponses = (
-  responses: unknown,
-): QuestionResponseInput[] => {
+const normalizeResponses = (responses: unknown): QuestionResponseInput[] => {
   if (!Array.isArray(responses)) {
     throw new Error('responses must be an array');
   }
@@ -33,7 +31,8 @@ const normalizeResponses = (
     const rawValues = (response as { values?: unknown }).values;
 
     const values =
-      Array.isArray(rawValues) && rawValues.every((entry) => typeof entry === 'string')
+      Array.isArray(rawValues) &&
+      rawValues.every((entry) => typeof entry === 'string')
         ? rawValues
         : [];
 
@@ -58,9 +57,10 @@ app.get('/intake-forms/:name', async (req, res) => {
     return res.json({ form });
   } catch (error) {
     console.error('Failed to fetch intake form', error);
-    return res
-      .status(500)
-      .json({ message: 'Unable to load intake form', error: (error as Error).message });
+    return res.status(500).json({
+      message: 'Unable to load intake form',
+      error: (error as Error).message,
+    });
   }
 });
 
@@ -73,9 +73,10 @@ app.get('/questions', async (_req, res) => {
     return res.json({ questions: form.questions });
   } catch (error) {
     console.error('Failed to fetch questions', error);
-    return res
-      .status(500)
-      .json({ message: 'Unable to load questions', error: (error as Error).message });
+    return res.status(500).json({
+      message: 'Unable to load questions',
+      error: (error as Error).message,
+    });
   }
 });
 
@@ -107,9 +108,10 @@ app.post('/projects', async (req, res) => {
     return res.json(project);
   } catch (error) {
     console.error('Failed to create project', error);
-    return res
-      .status(500)
-      .json({ message: 'Unable to save project', error: (error as Error).message });
+    return res.status(500).json({
+      message: 'Unable to save project',
+      error: (error as Error).message,
+    });
   }
 });
 

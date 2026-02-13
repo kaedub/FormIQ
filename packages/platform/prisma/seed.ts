@@ -20,53 +20,42 @@ const testUser = {
 
 const questions: IntakeQuestionSeed[] = [
   {
-    id: 'goal_statement',
-    prompt: 'What is the primary goal you want to achieve in the next 4-6 weeks?',
+    id: 'goal_main_win',
+    prompt:
+      'What do you want to achieve, and what’s the main win you’re after (e.g., certification, launch, portfolio)?',
     options: [],
     questionType: 'free_text',
     position: 0,
   },
   {
-    id: 'success_criteria',
-    prompt: 'What outcomes or milestones would make you consider this a success?',
+    id: 'existing_resources',
+    prompt:
+      'What resources do you already have (gear, budget, access, skills)?',
     options: [],
     questionType: 'free_text',
     position: 1,
   },
   {
-    id: 'timeline',
-    prompt: 'When do you need an initial roadmap or deliverables?',
-    options: ['This week', 'Within 2 weeks', 'Within a month', 'Flexible'],
-    questionType: 'single_select',
+    id: 'time_commitment',
+    prompt: 'How much time/effort can you commit, and on what cadence?',
+    options: [],
+    questionType: 'free_text',
     position: 2,
   },
   {
-    id: 'goal_domain',
-    prompt: 'Which area best describes your goal?',
-    options: ['Product/Startup', 'Engineering', 'Design/UX', 'Marketing/Growth', 'Operations'],
-    questionType: 'single_select',
+    id: 'constraints',
+    prompt:
+      'What constraints or no-gos should we respect (tools/tech, policies, budget caps, forbidden content)?',
+    options: [],
+    questionType: 'free_text',
     position: 3,
   },
   {
-    id: 'available_resources',
-    prompt: 'Which resources can you leverage?',
-    options: ['Dedicated time', 'Budget', 'Team members', 'Tools/Software', 'Subject matter expert'],
-    questionType: 'multi_select',
+    id: 'success_signals',
+    prompt: 'How will you know it’s a success (one or two signals)?',
+    options: [],
+    questionType: 'free_text',
     position: 4,
-  },
-  {
-    id: 'risks_and_blockers',
-    prompt: 'What risks or blockers do you anticipate?',
-    options: ['Unclear requirements', 'Stakeholder alignment', 'Technical debt', 'Data/Access gaps', 'Tight timeline'],
-    questionType: 'multi_select',
-    position: 5,
-  },
-  {
-    id: 'update_preference',
-    prompt: 'How frequently do you want progress updates?',
-    options: ['Daily summary', 'Twice weekly', 'Weekly', 'Milestone-based'],
-    questionType: 'single_select',
-    position: 6,
   },
 ];
 

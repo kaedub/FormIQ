@@ -7,9 +7,7 @@ export type OpenAIClientProviderOptions = {
 
 let openAIInstance: OpenAI | undefined;
 
-const resolveApiKey = (
-  options: OpenAIClientProviderOptions,
-): string => {
+const resolveApiKey = (options: OpenAIClientProviderOptions): string => {
   const apiKey = options.apiKey ?? process.env['OPENAI_API_KEY'];
 
   if (!apiKey) {

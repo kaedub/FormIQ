@@ -1,7 +1,7 @@
-import { JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import styles from './app.module.css';
-import {
+import type {
   IntakeQuestionDto,
   ProjectDto,
   ProjectSummaryDto,
@@ -26,7 +26,7 @@ function HomePage(): JSX.Element {
       if (!res.ok) {
         throw new Error(`Failed to load projects: ${res.status}`);
       }
-      const data = await res.json();
+      const data = await res.json() as { projects: ProjectSummaryDto[] };
       setProjects(data.projects);
     } catch (err) {
       console.warn('Could not load projects', err);
@@ -41,32 +41,31 @@ function HomePage(): JSX.Element {
     void loadProjects();
   }, [loadProjects]);
 
-
   return (
-    <div className={styles.home}>
-      <div className={styles.homeCard}>
-        <p className={styles.eyebrow}>Project hub</p>
-        <h1 className={styles.homeTitle}>Your projects</h1>
-        <p className={styles.lead}>
+    <div className={styles['home']}>
+      <div className={styles['homeCard']}>
+        <p className={styles['eyebrow']}>Project hub</p>
+        <h1 className={styles['homeTitle']}>Your projects</h1>
+        <p className={styles['lead']}>
           Start a new project to capture a goal and its context. Your saved work
           will appear here.
         </p>
-        <div className={styles.homeActions}>
-          <Link to="/intake" className={styles.primaryLink}>
+        <div className={styles['homeActions']}>
+          <Link to="/intake" className={styles['primaryLink']}>
             Start New Project
           </Link>
         </div>
-        <div className={styles.projectList}>
+        <div className={styles['projectList']}>
           {loading ? (
-            <div className={styles.homePlaceholder}>
+            <div className={styles['homePlaceholder']}>
               <p>Loading projects…</p>
             </div>
           ) : error ? (
-            <div className={styles.homePlaceholder}>
+            <div className={styles['homePlaceholder']}>
               <p>{error}</p>
             </div>
           ) : projects.length === 0 ? (
-            <div className={styles.homePlaceholder}>
+            <div className={styles['homePlaceholder']}>
               <p>No projects yet. Create one to see it here.</p>
             </div>
           ) : (
@@ -74,16 +73,18 @@ function HomePage(): JSX.Element {
               <Link
                 key={project.id}
                 to={`/projects/${project.id}`}
-                className={styles.projectCardLink}
+                className={styles['projectCardLink']}
               >
-                <article className={styles.projectCard}>
-                  <div className={styles.projectCardTop}>
-                    <p className={styles.projectStatus}>
+                <article className={styles['projectCard']}>
+                  <div className={styles['projectCardTop']}>
+                    <p className={styles['projectStatus']}>
                       {project.status ?? 'unknown'}
                     </p>
-                    <span className={styles.projectBadge}>Project</span>
+                    <span className={styles['projectBadge']}>Project</span>
                   </div>
-                  <h2 className={styles.projectTitleHome}>{project.title}</h2>
+                  <h2 className={styles['projectTitleHome']}>
+                    {project.title}
+                  </h2>
                 </article>
               </Link>
             ))
@@ -105,23 +106,21 @@ function IntakePage(): JSX.Element {
   useEffect(() => {
     const loadQuestions = async () => {
       try {
-        const res = await fetch(
-          `${API_BASE}/intake-forms/${INTAKE_FORM_NAME}`,
-        );
+        const res = await fetch(`${API_BASE}/intake-forms/${INTAKE_FORM_NAME}`);
         if (!res.ok) throw new Error('Failed to load questions');
-        const data = await res.json();
-        setQuestions(data.form?.questions);
+        const data = await res.json() as { form: { questions: IntakeQuestionDto[] } };
+        setQuestions(data.form.questions);
       } catch (error) {
         console.warn('Falling back to static questions', error);
         setStatus('Using fallback questions; API not reachable yet.');
       }
     };
 
-    loadQuestions();
+    void loadQuestions();
   }, []);
 
   const responsePayload: QuestionResponseInput[] = useMemo(() => {
-    return questions.map((question, index) => {
+    return questions.map((question) => {
       const value = answers[question.id];
       if (question.questionType === 'multi_select') {
         const list = Array.isArray(value) ? (value as string[]) : [];
@@ -157,7 +156,7 @@ function IntakePage(): JSX.Element {
         body: JSON.stringify({
           title: title.trim(),
           responses: responsePayload,
-        }), 
+        }),
       });
 
       if (!res.ok) {
@@ -186,19 +185,19 @@ function IntakePage(): JSX.Element {
   };
 
   return (
-    <main className={styles.page}>
-      <section className={styles.panel}>
-        <header className={styles.header}>
-          <p className={styles.eyebrow}>Goal intake</p>
-          <h1 className={styles.title}>Capture a goal and the context</h1>
-          <p className={styles.lead}>
+    <main className={styles['page']}>
+      <section className={styles['panel']}>
+        <header className={styles['header']}>
+          <p className={styles['eyebrow']}>Goal intake</p>
+          <h1 className={styles['title']}>Capture a goal and the context</h1>
+          <p className={styles['lead']}>
             Share what you want to achieve and answer a few prompts. We&apos;ll
             save it and draft a roadmap next.
           </p>
         </header>
 
-        <form className={styles.form} onSubmit={submit}>
-          <label className={styles.field}>
+        <form className={styles['form']} onSubmit={submit}>
+          <label className={styles['field']}>
             <span>Goal title</span>
             <input
               type="text"
@@ -209,23 +208,25 @@ function IntakePage(): JSX.Element {
             />
           </label>
 
-          <div className={styles.questions}>
-            {questions.map((question, index) => (
-              <div key={question.id} className={styles.questionCard}>
-                <p className={styles.questionText}>{question.prompt}</p>
+          <div className={styles['questions']}>
+            {questions.map((question) => (
+              <div key={question.id} className={styles['questionCard']}>
+                <p className={styles['questionText']}>{question.prompt}</p>
                 {question.questionType === 'multi_select' ? (
-                  <div className={styles.options}>
+                  <div className={styles['options']}>
                     {question.options.map((option) => {
                       const selected = Array.isArray(answers[question.id])
                         ? (answers[question.id] as string[]).includes(option)
                         : false;
                       return (
-                        <label key={option} className={styles.option}>
+                        <label key={option} className={styles['option']}>
                           <input
                             type="checkbox"
                             checked={selected}
                             onChange={(event) => {
-                              const current = Array.isArray(answers[question.id])
+                              const current = Array.isArray(
+                                answers[question.id],
+                              )
                                 ? (answers[question.id] as string[])
                                 : [];
                               const next = event.target.checked
@@ -241,7 +242,7 @@ function IntakePage(): JSX.Element {
                   </div>
                 ) : (
                   <textarea
-                    value={(answers[question.id] as string) ?? ''}
+                    value={(answers[question.id] as string)}
                     onChange={(event) =>
                       updateAnswer(question.id, event.target.value)
                     }
@@ -253,22 +254,22 @@ function IntakePage(): JSX.Element {
             ))}
           </div>
 
-          <button type="submit" className={styles.submit} disabled={loading}>
+          <button type="submit" className={styles['submit']} disabled={loading}>
             {loading ? 'Saving…' : 'Save goal and answers'}
           </button>
-          {status && <p className={styles.status}>{status}</p>}
+          {status && <p className={styles['status']}>{status}</p>}
         </form>
       </section>
 
       {project && (
-        <section className={styles.result}>
+        <section className={styles['result']}>
           <h2>Saved project</h2>
-          <p className={styles.projectTitle}>{project.title}</p>
-          <p className={styles.projectMeta}>
+          <p className={styles['projectTitle']}>{project.title}</p>
+          <p className={styles['projectMeta']}>
             Status: {project.status} · Responses captured:{' '}
             {project.responses.length}
           </p>
-          <ul className={styles.detailList}>
+          <ul className={styles['detailList']}>
             {project.responses.map((response) => (
               <li key={response.answer.questionId}>
                 <strong>{response.question.prompt}</strong>
@@ -289,15 +290,15 @@ function IntakePage(): JSX.Element {
 function StoryDetailsPage(): JSX.Element {
   const { projectId } = useParams<{ projectId: string }>();
   return (
-    <div className={styles.home}>
-      <div className={styles.homeCard}>
-        <p className={styles.eyebrow}>Project detail</p>
-        <h1 className={styles.homeTitle}>Project {projectId}</h1>
-        <p className={styles.lead}>
+    <div className={styles['home']}>
+      <div className={styles['homeCard']}>
+        <p className={styles['eyebrow']}>Project detail</p>
+        <h1 className={styles['homeTitle']}>Project {projectId}</h1>
+        <p className={styles['lead']}>
           Detailed view coming soon. Use the intake form to add more stories.
         </p>
-        <div className={styles.homeActions}>
-          <Link to="/" className={styles.primaryLink}>
+        <div className={styles['homeActions']}>
+          <Link to="/" className={styles['primaryLink']}>
             Back to projects
           </Link>
         </div>

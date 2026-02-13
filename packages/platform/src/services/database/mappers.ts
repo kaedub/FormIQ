@@ -150,7 +150,9 @@ export const mapPromptExecutionDto = (
   return dto;
 };
 
-export const mapProjectEventDto = (event: ProjectEventModel): ProjectEventDto => ({
+export const mapProjectEventDto = (
+  event: ProjectEventModel,
+): ProjectEventDto => ({
   id: event.id,
   projectId: event.projectId,
   eventType: event.eventType,
