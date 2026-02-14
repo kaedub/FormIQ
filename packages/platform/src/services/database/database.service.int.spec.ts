@@ -77,7 +77,7 @@ describe('PrismaDatabaseService integration', () => {
     const user = await createTestUser(prisma);
     const created = await service.createProject(buildProjectInput(user.id));
 
-    const fetched = await service.getProjectById(created.id, user.id);
+    const fetched = await service.getProject(created.id, user.id);
 
     expect(fetched).not.toBeNull();
     expect(fetched?.id).toBe(created.id);
@@ -89,7 +89,7 @@ describe('PrismaDatabaseService integration', () => {
     const intruder = await createTestUser(prisma);
     const created = await service.createProject(buildProjectInput(owner.id));
 
-    const fetched = await service.getProjectById(created.id, intruder.id);
+    const fetched = await service.getProject(created.id, intruder.id);
 
     expect(fetched).toBeNull();
   });

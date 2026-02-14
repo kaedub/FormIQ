@@ -1,14 +1,31 @@
+
 export type QuestionType = 'multi_select' | 'single_select' | 'free_text';
+
+type UserProjectInput = {
+  userId: string;
+  projectId: string;
+}
 
 export interface QuestionResponseInput {
   questionId: string;
   values: string[];
 }
 
+export type GetProjectInput = UserProjectInput;
+
 export interface CreateProjectInput {
   userId: string;
   title: string;
   responses: QuestionResponseInput[];
+}
+
+
+export type CreateProjectMilestonesInput = UserProjectInput & {
+  milestones: MilestoneDto[]
+}
+
+export type CreateMilestoneTasksInput = UserProjectInput & {
+  milestoneId: string;
 }
 
 export type ProjectStatus = 'draft' | 'generating' | 'ready';
@@ -31,7 +48,7 @@ export interface IntakeFormDto {
   questions: IntakeQuestionDto[];
 }
 
-export interface IntakeFormQuestions {
+export interface CreateIntakeFormInput {
   name: string;
   questions: IntakeQuestionDto[];
 }

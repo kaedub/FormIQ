@@ -1,31 +1,33 @@
 import type { PrismaClient } from '@prisma/client';
 import type {
+  CreateMilestoneTasksInput,
   CreateProjectInput,
+  CreateProjectMilestonesInput,
   IntakeFormDto,
-  IntakeFormQuestions,
+  CreateIntakeFormInput,
   MilestoneDto,
   ProjectContextDto,
   ProjectDto,
   ProjectSummaryDto,
+  GetProjectInput,
 } from '@formiq/shared';
+import type { string } from 'zod/v4';
 
 export type DatabaseServiceDependencies = {
   db: PrismaClient;
 };
 
 export interface DatabaseService {
-  getProjectById(projectId: string, userId: string): Promise<ProjectDto | null>;
-  getProjectContext(
-    projectId: string,
-    userId: string,
-  ): Promise<ProjectContextDto>;
+  getProject(input: GetProjectInput): Promise<ProjectDto | null>;
+  getProjectContext(input: GetProjectInput): Promise<ProjectContextDto>;
   getProjectsByUserId(userId: string): Promise<ProjectSummaryDto[]>;
   getIntakeFormByName(name: string): Promise<IntakeFormDto | null>;
-  createIntakeForm(intakeForm: IntakeFormQuestions): Promise<IntakeFormDto>;
+  createIntakeForm(input: CreateIntakeFormInput): Promise<IntakeFormDto>;
   createProject(input: CreateProjectInput): Promise<ProjectDto>;
   createProjectMilestones(
-    projectId: string,
-    userId: string,
-    milestones: MilestoneDto[],
+    input: CreateProjectMilestonesInput
+  ): Promise<void>;
+  createMilestoneTasks(
+    input: CreateMilestoneTasksInput
   ): Promise<void>;
 }

@@ -98,11 +98,11 @@ const run = async (): Promise<void> => {
     }),
   );
 
-  await databaseService.createProjectMilestones(
-    project.id,
-    USER_ID,
-    milestones,
-  );
+  await databaseService.createProjectMilestones({
+    projectId: project.id,
+    userId: USER_ID,
+    milestones
+  });
 
   const milestone = milestones[0]!;
   const { tasks } = await aiService.generateTasksForMilestone({

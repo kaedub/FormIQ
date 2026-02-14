@@ -1,12 +1,15 @@
 import { MilestoneStatus, type PrismaClient } from '@prisma/client';
 import type { DatabaseService, DatabaseServiceDependencies } from './types.js';
 import type {
+  CreateMilestoneTasksInput,
   CreateProjectInput,
+  CreateProjectMilestonesInput,
   IntakeFormDto,
-  IntakeFormQuestions,
+  CreateIntakeFormInput,
   ProjectContextDto,
   ProjectDto,
   ProjectSummaryDto,
+  GetProjectInput,
 } from '@formiq/shared';
 import type {
   IntakeFormWithQuestions,
@@ -25,10 +28,7 @@ import {
 class PrismaDatabaseService implements DatabaseService {
   constructor(private readonly db: PrismaClient) {}
 
-  async getProjectById(
-    projectId: string,
-    userId: string,
-  ): Promise<ProjectDto | null> {
+  async getProject({ projectId, userId }: GetProjectInput): Promise<ProjectDto | null> {
     const project = (await this.db.project.findFirst({
       where: {
         id: projectId,
@@ -51,10 +51,7 @@ class PrismaDatabaseService implements DatabaseService {
     return project ? mapProjectDto(project) : null;
   }
 
-  async getProjectContext(
-    projectId: string,
-    userId: string,
-  ): Promise<ProjectContextDto> {
+  async getProjectContext({ projectId, userId }: GetProjectInput): Promise<ProjectContextDto> {
     const project = (await this.db.project.findFirst({
       where: {
         id: projectId,
@@ -132,14 +129,13 @@ class PrismaDatabaseService implements DatabaseService {
     return form ? mapIntakeFormDto(form) : null;
   }
 
-  async createIntakeForm(
-    intakeForm: IntakeFormQuestions,
-  ): Promise<IntakeFormDto> {
+  async createIntakeForm(input: CreateIntakeFormInput): Promise<IntakeFormDto> {
+    const { name, questions } = input;
     const created = (await this.db.intakeForm.create({
       data: {
-        name: intakeForm.name,
+        name: name,
         questions: {
-          create: intakeForm.questions.map((question) => ({
+          create: questions.map((question) => ({
             id: question.id,
             prompt: question.prompt,
             options: question.options,
@@ -192,11 +188,8 @@ class PrismaDatabaseService implements DatabaseService {
     return mapProjectDto(project);
   }
 
-  async createProjectMilestones(
-    projectId: string,
-    userId: string,
-    milestones: ProjectContextDto['milestones'],
-  ): Promise<void> {
+  async createProjectMilestones(input: CreateProjectMilestonesInput): Promise<void> {
+    const { projectId, userId, milestones } = input;
     const project = await this.db.project.findFirst({
       where: {
         id: projectId,
@@ -236,6 +229,9 @@ class PrismaDatabaseService implements DatabaseService {
         // metadata: milestone.metadata,
       })),
     });
+  }
+
+  async createMilestoneTasks(args: CreateMilestoneTasksInput): Promise<void> {
   }
 }
 
