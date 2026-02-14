@@ -6,7 +6,7 @@ const questionTypeSchema = z.enum([
   'multi_select',
 ]);
 
-export const intakeQuestionSchema = z
+export const formQuestionSchema = z
   .object({
     id: z.string().min(1),
     prompt: z.string().min(1),
@@ -16,9 +16,9 @@ export const intakeQuestionSchema = z
   })
   .strict();
 
-export const intakeFormSchema = z
+export const formDefinitionSchema = z
   .object({
-    questions: z.array(intakeQuestionSchema),
+    questions: z.array(formQuestionSchema),
   })
   .strict();
 

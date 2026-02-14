@@ -1,7 +1,12 @@
 import cors from 'cors';
 import express from 'express';
-import { createDatabaseService, getPrismaClient } from '@formiq/platform';
-import { TEST_USER_ID } from '@formiq/shared';
+import { createAIService, createDatabaseService, getOpenAIClient, getPrismaClient } from '@formiq/platform';
+import {
+  TEST_USER_ID,
+  isProjectCommitment,
+  isProjectFamiliarity,
+  isProjectWorkStyle,
+} from '@formiq/shared';
 import type { QuestionResponseInput } from '@formiq/shared';
 
 const app = express();
@@ -11,7 +16,8 @@ app.use(express.json());
 const prisma = getPrismaClient();
 const db = createDatabaseService({ db: prisma });
 
-const DEFAULT_FORM_NAME = 'goal_intake_v1';
+const client = getOpenAIClient();
+const ai = createAIService({ client });
 
 const normalizeResponses = (responses: unknown): QuestionResponseInput[] => {
   if (!Array.isArray(responses)) {
@@ -40,6 +46,7 @@ const normalizeResponses = (responses: unknown): QuestionResponseInput[] => {
   });
 };
 
+
 app.get('/', (_req, res) => {
   res.send('Welcome to the Project Intake API');
 });
@@ -48,36 +55,86 @@ app.get('/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
 
-app.get('/intake-forms/:name', async (req, res) => {
+app.get('/project-intake/questions', async (_req, res) => {
   try {
-    const form = await db.getIntakeFormByName(req.params['name']);
-    if (!form) {
-      return res.status(404).json({ message: 'Intake form not found' });
-    }
+    const form = await db.getProjectIntakeForm();
     return res.json({ form });
   } catch (error) {
-    console.error('Failed to fetch intake form', error);
+    console.error('Failed to fetch project intake questions', error);
     return res.status(500).json({
-      message: 'Unable to load intake form',
+      message: 'Unable to load project intake questions',
       error: (error as Error).message,
     });
   }
 });
 
-app.get('/questions', async (_req, res) => {
+app.get('/focus-questions/:name', async (req, res) => {
   try {
-    const form = await db.getIntakeFormByName(DEFAULT_FORM_NAME);
+    const form = await db.getFocusFormByName(req.params['name']);
     if (!form) {
-      return res.status(404).json({ message: 'Default intake form not found' });
+      return res.status(404).json({ message: 'Focus questions not found' });
     }
-    return res.json({ questions: form.questions });
+    return res.json({ focusForm: form });
   } catch (error) {
-    console.error('Failed to fetch questions', error);
+    console.error('Failed to fetch focus questions', error);
     return res.status(500).json({
-      message: 'Unable to load questions',
+      message: 'Unable to load focus questions',
       error: (error as Error).message,
     });
   }
+});
+
+app.post('/projects/start', async (req, res) => {
+  const { goal: goalRaw, commitment, familiarity, workStyle } = req.body ?? {};
+  if (typeof goalRaw !== 'string' || goalRaw.trim().length === 0) {
+    return res.status(400).json({ message: 'goal is required' });
+  }
+  if (!isProjectCommitment(commitment)) {
+    return res.status(400).json({ message: 'commitment is invalid' });
+  }
+  if (!isProjectFamiliarity(familiarity)) {
+    return res.status(400).json({ message: 'familiarity is invalid' });
+  }
+  if (!isProjectWorkStyle(workStyle)) {
+    return res.status(400).json({ message: 'workStyle is invalid' });
+  }
+
+  const goal = goalRaw.trim();
+  console.info('Received new project intake', { goal, commitment, familiarity, workStyle });
+
+  const project = await db.createProject({
+    userId: TEST_USER_ID,
+    title: goal,
+    responses: [],
+  });
+
+  const focusForm = await db.createFocusForm({
+    name: `focus-questions-${Date.now()}`,
+    projectId: project.id,
+    kind: 'focus_questions',
+  });
+
+  const focusQuestions = await ai.generateFocusQuestions({
+    goal,
+    commitment,
+    familiarity,
+    workStyle,
+  });
+
+  if (focusQuestions.questions.length > 0) {
+    await prisma.focusItem.createMany({
+      data: focusQuestions.questions.map((question) => ({
+        formId: focusForm.id,
+        userId: TEST_USER_ID,
+        question: question.prompt,
+        options: question.options,
+        questionType: question.questionType,
+        position: question.position,
+      })),
+    });
+  }
+
+  return res.json({ goal, focusQuestions, status: 'ok' });
 });
 
 app.get('/projects', async (_req, res) => {

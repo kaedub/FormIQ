@@ -27,8 +27,6 @@ const run = async (): Promise<void> => {
   const aiService = createAIService({ client: getOpenAIClient() });
 
   await ensureTestUser(prisma);
-  const intakeForm =
-    await databaseService.getIntakeFormByName('goal_intake_v1');
 
   const projectInput: CreateProjectInput = {
     userId: TEST_USER_ID,

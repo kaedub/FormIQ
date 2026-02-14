@@ -14,17 +14,53 @@ import {
   TASK_GENERATION_PROMPT,
 } from './constants.js';
 import {
-  intakeFormSchema,
+  formDefinitionSchema,
   projectContextSchema,
   projectPlanSchema,
   milestoneTaskContextSchema,
   milestoneTasksSchema,
 } from './schemas.js';
-import type { TaskGenerationContext } from './types.js';
 import type z from 'zod';
 import type OpenAI from 'openai';
 import { zodTextFormat } from 'openai/helpers/zod.js';
-import type { MilestoneDto, ProjectDto } from '@formiq/shared';
+import type {
+  FocusQuestionsContextInput,
+  MilestoneDto,
+  ProjectCommitment,
+  ProjectDto,
+  ProjectFamiliarity,
+  ProjectWorkStyle,
+} from '@formiq/shared';
+
+type FocusQuestionsUserContext = FocusQuestionsContextInput;
+type EffortLevel = 'beginner' | 'intermediate' | 'experienced';
+type FocusQuestionsPromptContext = {
+  goal: string;
+  time_per_week: number;
+  effort_level: EffortLevel;
+  commitment_choice: ProjectCommitment;
+  familiarity_choice: ProjectFamiliarity;
+  work_style: string;
+};
+
+const commitmentHoursMap: Record<ProjectCommitment, number> = {
+  hours_1_3: 2,
+  hours_4_6: 5,
+  hours_7_10: 8,
+  hours_10_plus: 12,
+};
+
+const familiarityEffortLevelMap: Record<ProjectFamiliarity, EffortLevel> = {
+  completely_new: 'beginner',
+  some_experience: 'intermediate',
+  experienced_refining: 'experienced',
+};
+
+const workStyleLabelMap: Record<ProjectWorkStyle, string> = {
+  short_daily_sessions: 'Short daily sessions',
+  focused_sessions_per_week: 'A few focused sessions per week',
+  flexible_or_varies: 'Flexible or varies',
+};
 
 interface GenerationRequest<
   Context,
@@ -75,21 +111,45 @@ abstract class BaseGenerationRequest<
   }
 }
 
-export class IntakeFormDefinitionRequest extends BaseGenerationRequest<
+export class FocusQuestionsRequest extends BaseGenerationRequest<
+  FocusQuestionsUserContext,
   null,
-  null,
-  typeof intakeFormSchema
+  typeof formDefinitionSchema
 > {
-  name = 'intake_form';
+  name = 'focus_questions';
   model = DEFAULT_MODEL;
   systemPrompt = INTAKE_FORM_PROMPT;
-  description = 'FormIQ intake form definition payload';
+  description = 'FormIQ focus questions payload';
   inputSchema = null;
-  outputSchema = intakeFormSchema;
-  context = null;
+  outputSchema = formDefinitionSchema;
+  context: FocusQuestionsUserContext;
+
+  constructor(client: OpenAI, context: FocusQuestionsUserContext) {
+    super(client);
+    this.context = context;
+  }
+
+  private buildUserContextPayload(): FocusQuestionsPromptContext {
+    const { commitment, familiarity, workStyle, goal } = this.context;
+
+    return {
+      goal,
+      time_per_week: commitmentHoursMap[commitment],
+      effort_level: familiarityEffortLevelMap[familiarity],
+      commitment_choice: commitment,
+      familiarity_choice: familiarity,
+      work_style: workStyleLabelMap[workStyle],
+    };
+  }
 
   buildUserPrompt(): string {
-    return 'Generate an intake form JSON payload.';
+    const userContext = this.buildUserContextPayload();
+
+    return [
+      'USER_CONTEXT_JSON:',
+      JSON.stringify(userContext, null, 2),
+      'Generate a focus questions JSON payload.',
+    ].join('\n');
   }
 }
 

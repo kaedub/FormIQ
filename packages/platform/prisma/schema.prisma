@@ -58,40 +58,38 @@ enum ProjectEventType {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
+  id       String    @id @default(uuid())
+  email    String    @unique
   password String
   projects Project[]
 }
 
-model IntakeForm {
-  id        String           @id @default(uuid())
-  name      String           @unique
-  questions IntakeQuestion[]
+model FocusForm {
+  id        String       @id @default(uuid())
+  name      String       @unique
+  projectId String       @unique
+  project   Project      @relation(fields: [projectId], references: [id])
+  items     FocusItem[]
 }
 
-model IntakeQuestion {
-  id           String           @id @default(uuid())
-  prompt       String
-  options      String[]
+model FocusItem {
+  id           String       @id @default(uuid())
+  formId       String
+  userId       String
+  question     String
+  options      String[]     @default([])
   questionType QuestionType
   position     Int
-  createdAt    DateTime         @default(now())
-  updatedAt    DateTime         @updatedAt
-  formId       String
-  form         IntakeForm       @relation(fields: [formId], references: [id])
-  answers      QuestionAnswer[]
-}
+  answer       String? // null until user submits responses; store multi-select joined or JSON string
+  answeredAt   DateTime? // set when answer is captured
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-model QuestionAnswer {
-  id         String         @id @default(uuid())
-  userId     String
-  projectId  String
-  questionId String
-  values     String[]
-  answeredAt DateTime       @default(now())
-  project    Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  question   IntakeQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  form FocusForm @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@unique([formId, position])
+  @@index([formId])
+  @@index([userId])
 }
 
 model Project {
@@ -99,11 +97,11 @@ model Project {
   userId           String
   title            String
   status           ProjectStatus     @default(draft)
-  generatedAt      DateTime?
   createdAt        DateTime          @default(now())
   updatedAt        DateTime          @updatedAt
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  questionAnswers  QuestionAnswer[]
+  generatedAt      DateTime?
+  intakeForm       FocusForm?
   milestones       Milestone[]
   promptExecutions PromptExecution[]
   events           ProjectEvent[]
@@ -139,40 +137,40 @@ model Task {
 }
 
 model PromptTemplate {
-  id               String            @id @default(uuid())
+  id               String               @id @default(uuid())
   title            String
   prompt           String
   schema           Json?
   stage            PromptExecutionStage
-  version          Int               @default(1)
+  version          Int                  @default(1)
   metadata         Json?
   promptExecutions PromptExecution[]
 }
 
 model PromptExecution {
-  id         String                @id @default(uuid())
-  projectId  String
+  id          String                @id @default(uuid())
+  projectId   String
   milestoneId String?
-  taskId     String?
-  templateId String?
-  stage      PromptExecutionStage
-  status     PromptExecutionStatus @default(pending)
-  input      Json
-  output     Json?
-  model      String?
-  metadata   Json?
-  createdAt  DateTime              @default(now())
-  project    Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  milestone  Milestone?            @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
-  task       Task?                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  template   PromptTemplate?       @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  taskId      String?
+  templateId  String?
+  stage       PromptExecutionStage
+  status      PromptExecutionStatus @default(pending)
+  input       Json
+  output      Json?
+  model       String?
+  metadata    Json?
+  createdAt   DateTime              @default(now())
+  project     Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  milestone   Milestone?            @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  task        Task?                 @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  template    PromptTemplate?       @relation(fields: [templateId], references: [id], onDelete: Cascade)
 }
 
 model ProjectEvent {
-  id        String          @id @default(uuid())
+  id        String           @id @default(uuid())
   projectId String
   eventType ProjectEventType
   payload   Json?
-  createdAt DateTime        @default(now())
-  project   Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  project   Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
 }

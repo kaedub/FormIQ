@@ -95,7 +95,7 @@ General Intake V1
 
 ### Core classes
 
-- `IntakeFormDefinitionRequest`
+- `FocusQuestionsRequest`
   - Purpose: generate the intake form (`intake_form` JSON).
   - Domain input: none for now (later: configuration/variant).
   - Output: `intake_form` JSON validated locally (e.g., `intakeFormSchema`).

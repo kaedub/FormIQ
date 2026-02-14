@@ -2,6 +2,128 @@ export type QuestionType = 'multi_select' | 'single_select' | 'free_text';
 
 export const TEST_USER_ID = 'test-user-id' as const;
 
+// TODO: These options can be cleaned up or maybe become database level
+export const PROJECT_COMMITMENT_OPTIONS = [
+  { value: 'hours_1_3', label: '1-3 hours' },
+  { value: 'hours_4_6', label: '4-6 hours' },
+  { value: 'hours_7_10', label: '7-10 hours' },
+  { value: 'hours_10_plus', label: '10+ hours' },
+] as const;
+
+export type ProjectCommitment =
+  (typeof PROJECT_COMMITMENT_OPTIONS)[number]['value'];
+
+export const PROJECT_FAMILIARITY_OPTIONS = [
+  { value: 'completely_new', label: 'Completely new' },
+  { value: 'some_experience', label: 'Some experience' },
+  { value: 'experienced_refining', label: 'Experienced / refining' },
+] as const;
+
+export type ProjectFamiliarity =
+  (typeof PROJECT_FAMILIARITY_OPTIONS)[number]['value'];
+
+export const PROJECT_WORK_STYLE_OPTIONS = [
+  { value: 'short_daily_sessions', label: 'Short daily sessions' },
+  {
+    value: 'focused_sessions_per_week',
+    label: 'A few focused sessions per week',
+  },
+  { value: 'flexible_or_varies', label: 'Flexible / varies' },
+] as const;
+
+export type ProjectWorkStyle =
+  (typeof PROJECT_WORK_STYLE_OPTIONS)[number]['value'];
+
+export const PROJECT_COMMITMENT_VALUES: ReadonlyArray<ProjectCommitment> =
+  PROJECT_COMMITMENT_OPTIONS.map(({ value }) => value);
+export const PROJECT_FAMILIARITY_VALUES: ReadonlyArray<ProjectFamiliarity> =
+  PROJECT_FAMILIARITY_OPTIONS.map(({ value }) => value);
+export const PROJECT_WORK_STYLE_VALUES: ReadonlyArray<ProjectWorkStyle> =
+  PROJECT_WORK_STYLE_OPTIONS.map(({ value }) => value);
+
+export interface FormOption<Value extends string = string> {
+  value: Value;
+  label: string;
+}
+
+export interface FormQuestion<Value extends string = string> {
+  id: string;
+  prompt: string;
+  questionType: Extract<QuestionType, 'free_text' | 'single_select'>;
+  options: ReadonlyArray<FormOption<Value>>;
+  position: number;
+  required: boolean;
+}
+
+export interface FormDefinition<QuestionValue extends string = string> {
+  questions: ReadonlyArray<FormQuestion<QuestionValue>>;
+}
+
+export interface ProjectIntakeAnswers {
+  goal: string;
+  commitment: ProjectCommitment;
+  familiarity: ProjectFamiliarity;
+  workStyle: ProjectWorkStyle;
+}
+
+export const PROJECT_INTAKE_FORM: FormDefinition = {
+  questions: [
+    {
+      id: 'goal',
+      prompt: 'What do you want to accomplish?',
+      questionType: 'free_text',
+      options: [],
+      position: 1,
+      required: true,
+    },
+    {
+      id: 'time_commitment',
+      prompt: 'How much time can you realistically commit per week?',
+      questionType: 'single_select',
+      options: PROJECT_COMMITMENT_OPTIONS,
+      position: 2,
+      required: true,
+    },
+    {
+      id: 'familiarity',
+      prompt: 'How familiar are you with this area?',
+      questionType: 'single_select',
+      options: PROJECT_FAMILIARITY_OPTIONS,
+      position: 3,
+      required: true,
+    },
+    {
+      id: 'work_style',
+      prompt: 'How do you prefer to work?',
+      questionType: 'single_select',
+      options: PROJECT_WORK_STYLE_OPTIONS,
+      position: 4,
+      required: true,
+    },
+  ],
+};
+
+export const isProjectCommitment = (
+  value: unknown,
+): value is ProjectCommitment =>
+  typeof value === 'string' &&
+  PROJECT_COMMITMENT_VALUES.includes(value as ProjectCommitment);
+
+export const isProjectFamiliarity = (
+  value: unknown,
+): value is ProjectFamiliarity =>
+  typeof value === 'string' &&
+  PROJECT_FAMILIARITY_VALUES.includes(value as ProjectFamiliarity);
+
+export const isProjectWorkStyle = (
+  value: unknown,
+): value is ProjectWorkStyle =>
+  typeof value === 'string' &&
+  PROJECT_WORK_STYLE_VALUES.includes(value as ProjectWorkStyle);
+
+export type FocusQuestionsContextInput = ProjectIntakeAnswers;
+export type FocusQuestionsDefinition = FormDefinition;
+
 type UserProjectInput = {
   userId: string;
   projectId: string;
@@ -41,35 +163,17 @@ export type MilestoneStatus = 'locked' | 'unlocked' | 'completed';
 
 export type TaskStatus = 'locked' | 'unlocked' | 'completed';
 
-export interface IntakeQuestionDto {
-  id: string;
-  prompt: string;
-  options: string[];
-  questionType: QuestionType;
-  position: number;
-}
-
-export interface IntakeFormDto {
+export interface FormRecordDto {
   id: string;
   name: string;
-  questions: IntakeQuestionDto[];
-}
-
-export interface CreateIntakeFormInput {
-  name: string;
-  questions: IntakeQuestionDto[];
-}
-
-export interface QuestionAnswerDto {
-  questionId: string;
   projectId: string;
-  values: string[];
-  answeredAt: string;
+  kind: 'project_intake' | 'focus_questions';
 }
 
-export interface QuestionResponseDto {
-  question: IntakeQuestionDto;
-  answer: QuestionAnswerDto;
+export interface CreateFormRecordInput {
+  name: string;
+  projectId: string;
+  kind: FormRecordDto['kind'];
 }
 
 export interface MilestoneDto {
@@ -96,6 +200,23 @@ export interface TaskDto {
   metadata?: unknown;
 }
 
+export interface ProjectQuestionDto {
+  id: string;
+  prompt: string;
+  questionType: QuestionType;
+  options: string[];
+}
+
+export interface ProjectResponseAnswerDto {
+  questionId: string;
+  values: string[];
+}
+
+export interface ProjectResponseDto {
+  question: ProjectQuestionDto;
+  answer: ProjectResponseAnswerDto;
+}
+
 export interface ProjectDto {
   id: string;
   userId: string;
@@ -104,7 +225,7 @@ export interface ProjectDto {
   generatedAt?: string;
   createdAt: string;
   updatedAt: string;
-  responses: QuestionResponseDto[];
+  responses: ProjectResponseDto[];
 }
 
 export interface ProjectSummaryDto {
@@ -161,11 +282,4 @@ export interface ProjectContextProjectDto extends ProjectDto {
 
 export interface ProjectContextDto {
   project: ProjectContextProjectDto;
-}
-
-export interface ProjectResponse {
-  id: string;
-  title: string;
-  status: ProjectStatus;
-  responses: QuestionResponseDto[];
 }

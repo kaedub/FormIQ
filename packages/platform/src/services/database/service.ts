@@ -1,24 +1,21 @@
 import { MilestoneStatus, TaskStatus, type PrismaClient } from '@prisma/client';
 import type { DatabaseService, DatabaseServiceDependencies } from './types.js';
+import { PROJECT_INTAKE_FORM } from '@formiq/shared';
 import type {
   CreateMilestoneTasksInput,
   CreateProjectInput,
   CreateProjectMilestonesInput,
-  IntakeFormDto,
-  CreateIntakeFormInput,
   ProjectContextDto,
   ProjectDto,
   ProjectSummaryDto,
   GetProjectInput,
+  FormRecordDto,
+  CreateFormRecordInput,
+  FormDefinition,
 } from '@formiq/shared';
-import type {
-  IntakeFormWithQuestions,
-  ProjectWithContext,
-  ProjectWithResponses,
-} from './mappers.js';
 import {
   mapMilestoneDto,
-  mapIntakeFormDto,
+  mapFormRecordDto,
   mapProjectDto,
   mapTaskDto,
 } from './mappers.js';
@@ -26,28 +23,20 @@ import {
 class PrismaDatabaseService implements DatabaseService {
   constructor(private readonly db: PrismaClient) {}
 
+  async getProjectIntakeForm(): Promise<FormDefinition> {
+    return PROJECT_INTAKE_FORM;
+  }
+
   async getProject({
     projectId,
     userId,
   }: GetProjectInput): Promise<ProjectDto | null> {
-    const project = (await this.db.project.findFirst({
+    const project = await this.db.project.findFirst({
       where: {
         id: projectId,
         userId,
       },
-      include: {
-        questionAnswers: {
-          include: {
-            question: true,
-          },
-          orderBy: {
-            question: {
-              position: 'asc',
-            },
-          },
-        },
-      },
-    })) as ProjectWithResponses | null;
+    });
 
     return project ? mapProjectDto(project) : null;
   }
@@ -56,22 +45,12 @@ class PrismaDatabaseService implements DatabaseService {
     projectId,
     userId,
   }: GetProjectInput): Promise<ProjectContextDto> {
-    const project = (await this.db.project.findFirst({
+    const project = await this.db.project.findFirst({
       where: {
         id: projectId,
         userId,
       },
       include: {
-        questionAnswers: {
-          include: {
-            question: true,
-          },
-          orderBy: {
-            question: {
-              position: 'asc',
-            },
-          },
-        },
         milestones: {
           include: {
             tasks: true,
@@ -80,13 +59,13 @@ class PrismaDatabaseService implements DatabaseService {
         promptExecutions: true,
         events: true,
       },
-    })) as ProjectWithContext | null;
+    });
 
     if (!project) {
       throw new Error(`Project ${projectId} not found for user ${userId}`);
     }
 
-    const projectDto = mapProjectDto(project as ProjectWithResponses);
+    const projectDto = mapProjectDto(project);
     const milestones = project.milestones.map((milestone) => ({
       ...mapMilestoneDto(milestone),
       tasks: milestone.tasks.map(mapTaskDto),
@@ -121,76 +100,36 @@ class PrismaDatabaseService implements DatabaseService {
     }));
   }
 
-  async getIntakeFormByName(name: string): Promise<IntakeFormDto | null> {
-    const form = (await this.db.intakeForm.findUnique({
+  async getFocusFormByName(name: string): Promise<FormRecordDto | null> {
+    const form = await this.db.focusForm.findUnique({
       where: { name },
-      include: {
-        questions: {
-          orderBy: {
-            position: 'asc',
-          },
-        },
-      },
-    })) as IntakeFormWithQuestions | null;
+    });
 
-    return form ? mapIntakeFormDto(form) : null;
+    return form ? mapFormRecordDto(form) : null;
   }
 
-  async createIntakeForm(input: CreateIntakeFormInput): Promise<IntakeFormDto> {
-    const { name, questions } = input;
-    const created = (await this.db.intakeForm.create({
+  async createFocusForm(input: CreateFormRecordInput): Promise<FormRecordDto> {
+    const { name, projectId, kind } = input;
+    if (kind !== 'focus_questions') {
+      throw new Error('Only focus_questions forms can be created');
+    }
+    const created = await this.db.focusForm.create({
       data: {
-        name: name,
-        questions: {
-          create: questions.map((question) => ({
-            id: question.id,
-            prompt: question.prompt,
-            options: question.options,
-            questionType: question.questionType,
-            position: question.position,
-          })),
-        },
+        name,
+        projectId,
       },
-      include: {
-        questions: {
-          orderBy: {
-            position: 'asc',
-          },
-        },
-      },
-    })) as IntakeFormWithQuestions;
+    });
 
-    return mapIntakeFormDto(created);
+    return mapFormRecordDto(created);
   }
 
   async createProject(input: CreateProjectInput): Promise<ProjectDto> {
-    const project = (await this.db.project.create({
+    const project = await this.db.project.create({
       data: {
         userId: input.userId,
         title: input.title,
-        questionAnswers: {
-          create: input.responses.map((response) => ({
-            userId: input.userId,
-            question: {
-              connect: { id: response.questionId },
-            },
-            values: response.values,
-          })),
-        },
       },
-      include: {
-        questionAnswers: {
-          include: {
-            question: true,
-          },
-          orderBy: {
-            question: {
-              position: 'asc',
-            },
-          },
-        },
-      },
-    })) as ProjectWithResponses;
+    });
 
     return mapProjectDto(project);
   }

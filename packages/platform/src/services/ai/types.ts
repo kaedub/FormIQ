@@ -2,19 +2,19 @@ import type OpenAI from 'openai';
 import { z } from 'zod';
 import type { MilestoneDto, ProjectDto } from '@formiq/shared';
 import {
-  intakeFormSchema,
+  formDefinitionSchema,
   projectMilestoneSchema,
   projectPlanSchema,
   milestoneTasksSchema,
   taskSchema,
 } from './schemas.js';
-import type { Project } from '@prisma/client';
+import type { FocusQuestionsContextInput } from '@formiq/shared';
 
 export type AIServiceDependencies = {
   client: OpenAI;
 };
 
-export type IntakeFormDefintion = z.infer<typeof intakeFormSchema>;
+export type FocusQuestionsDefinition = z.infer<typeof formDefinitionSchema>;
 
 export type ProjectOutlineMilestone = z.infer<typeof projectMilestoneSchema>;
 
@@ -38,8 +38,12 @@ export interface GenerateTasksForMilestoneArgs {
   milestone: MilestoneDto;
 }
 
+export type GenerateFocusQuestionsArgs = FocusQuestionsContextInput;
+
 export interface AIService {
-  generateForm(): Promise<IntakeFormDefintion>;
+  generateFocusQuestions(
+    args: GenerateFocusQuestionsArgs,
+  ): Promise<FocusQuestionsDefinition>;
   generateProjectOutline(
     args: GenerateProjectOutlineArgs,
   ): Promise<ProjectOutline>;

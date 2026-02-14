@@ -1,24 +1,35 @@
 import type OpenAI from 'openai';
 import {
-  IntakeFormDefinitionRequest,
+  FocusQuestionsRequest,
   ProjectOutlineGenerationRequest,
   TaskGenerationRequest,
 } from './generation-requests.js';
 import type {
   AIService,
   AIServiceDependencies,
-  IntakeFormDefintion,
+  FocusQuestionsDefinition,
   ProjectOutline,
   MilestoneTasks,
   GenerateTasksForMilestoneArgs,
   GenerateProjectOutlineArgs,
+  GenerateFocusQuestionsArgs,
 } from './types.js';
 
 class OpenAIService implements AIService {
   constructor(private readonly client: OpenAI) {}
 
-  async generateForm(): Promise<IntakeFormDefintion> {
-    const request = new IntakeFormDefinitionRequest(this.client);
+  async generateFocusQuestions({
+    goal,
+    commitment,
+    familiarity,
+    workStyle,
+  }: GenerateFocusQuestionsArgs): Promise<FocusQuestionsDefinition> {
+    const request = new FocusQuestionsRequest(this.client, {
+      goal,
+      commitment,
+      familiarity,
+      workStyle,
+    });
     const response = await request.execute();
     return response;
   }

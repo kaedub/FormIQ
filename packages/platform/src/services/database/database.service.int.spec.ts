@@ -1,14 +1,12 @@
-import { beforeAll, afterAll, beforeEach, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
-import { type PrismaClient, QuestionType } from '@prisma/client';
+import { type PrismaClient } from '@prisma/client';
 import { createDatabaseService } from './service.js';
 import type { DatabaseService } from './types.js';
 import {
   buildProjectInput,
   createTestUser,
-  QUESTION_FIXTURES,
   resetDatabase,
-  seedIntakeQuestions,
 } from '../../test/fixtures.js';
 import { getPrismaClient } from '../../clients/prisma.js';
 
@@ -19,7 +17,6 @@ describe('PrismaDatabaseService integration', () => {
   beforeAll(async () => {
     prisma = getPrismaClient();
     service = createDatabaseService({ db: prisma });
-    await seedIntakeQuestions(prisma);
   });
 
   afterAll(async () => {
@@ -30,47 +27,14 @@ describe('PrismaDatabaseService integration', () => {
     await resetDatabase(prisma);
   });
 
-  it('creates a project with ordered answers', async () => {
+  it('creates a project', async () => {
     const user = await createTestUser(prisma);
     const input = buildProjectInput(user.id);
 
     const result = await service.createProject(input);
 
     expect(result.title).toBe(input.title);
-    expect(result.responses).toHaveLength(QUESTION_FIXTURES.length);
-    result.responses.forEach((response, index) => {
-      const fixture = QUESTION_FIXTURES[index];
-      if (!fixture) {
-        throw new Error(`Missing question fixture at index ${index}`);
-      }
-
-      expect(response.question.id).toBe(fixture.id);
-      if (fixture.questionType === 'multi_select') {
-        const [firstOption] = fixture.options;
-        expect(firstOption).toBeDefined();
-        expect(response.answer.values).toEqual(
-          firstOption ? [firstOption] : [],
-        );
-      } else {
-        expect(response.answer.values).toEqual([`Answer ${index + 1}`]);
-      }
-    });
-
-    const storedAnswers = await prisma.questionAnswer.findMany({
-      where: { projectId: result.id },
-    });
-    expect(storedAnswers).toHaveLength(QUESTION_FIXTURES.length);
-  });
-
-  it('fails to create a project when question id is invalid', async () => {
-    const user = await createTestUser(prisma);
-    const input = buildProjectInput(user.id);
-    const responses = input.responses.map((response, index) =>
-      index === 0 ? { ...response, questionId: 'missing' } : response,
-    );
-    const invalidInput = { ...input, responses };
-
-    await expect(service.createProject(invalidInput)).rejects.toThrow();
+    expect(result.userId).toBe(user.id);
   });
 
   it('fetches a project by id for the owning user', async () => {
@@ -84,7 +48,6 @@ describe('PrismaDatabaseService integration', () => {
 
     expect(fetched).not.toBeNull();
     expect(fetched?.id).toBe(created.id);
-    expect(fetched?.responses.length).toBe(QUESTION_FIXTURES.length);
   });
 
   it('returns null when fetching a project owned by another user', async () => {
@@ -179,50 +142,36 @@ describe('PrismaDatabaseService integration', () => {
     });
   });
 
-  it('creates an intake form with ordered questions and fetches it by name', async () => {
+  it('creates a focus questions form without items and fetches it by name', async () => {
     const formName = `intake-${randomUUID()}`;
-    const intakeForm = {
-      name: formName,
-      questions: [
-        {
-          id: 'intake_question_secondary',
-          prompt: 'How soon do you need results?',
-          options: ['ASAP', '1-2 weeks', 'Flexible'],
-          questionType: QuestionType.single_select,
-          position: 1,
-        },
-        {
-          id: 'intake_question_primary',
-          prompt: 'What problem are you solving?',
-          options: [],
-          questionType: QuestionType.free_text,
-          position: 0,
-        },
-      ],
-    };
+    const user = await createTestUser(prisma);
+    const project = await service.createProject(buildProjectInput(user.id));
 
-    const created = await service.createIntakeForm(intakeForm);
+    const created = await service.createFocusForm({
+      name: formName,
+      projectId: project.id,
+      kind: 'focus_questions',
+    });
 
     expect(created.name).toBe(formName);
-    expect(created.questions.map((question) => question.position)).toEqual([
-      0, 1,
-    ]);
-    expect(created.questions.map((question) => question.id)).toEqual([
-      'intake_question_primary',
-      'intake_question_secondary',
-    ]);
+    expect(created.projectId).toBe(project.id);
 
-    const fetched = await service.getIntakeFormByName(formName);
+    const fetched = await service.getFocusFormByName(formName);
     expect(fetched?.id).toBe(created.id);
-    expect(fetched?.questions.map((question) => question.id)).toEqual([
-      'intake_question_primary',
-      'intake_question_secondary',
-    ]);
+    expect(fetched?.projectId).toBe(project.id);
   });
 
-  it('returns null when fetching a missing intake form', async () => {
-    const result = await service.getIntakeFormByName('missing_intake_form');
+  it('returns null when fetching missing focus questions', async () => {
+    const result = await service.getFocusFormByName('missing_intake_form');
 
     expect(result).toBeNull();
+  });
+
+  it('returns the static project intake form', async () => {
+    const form = await service.getProjectIntakeForm();
+
+    expect(form.questions).toHaveLength(4);
+    expect(form.questions[0]?.id).toBe('goal');
+    expect(form.questions[0]?.questionType).toBe('free_text');
   });
 });

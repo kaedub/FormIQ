@@ -2,17 +2,16 @@ import { type JSX, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
 import styles from './app.module.css';
 import type {
-  IntakeQuestionDto,
-  ProjectDto,
-  ProjectSummaryDto,
-  QuestionResponseInput,
+  FocusQuestionsDefinition,
+  FormDefinition,
+  ProjectCommitment,
   ProjectContextProjectDto,
+  ProjectFamiliarity,
+  ProjectSummaryDto,
+  ProjectWorkStyle,
 } from '@formiq/shared';
 
 const API_BASE = 'http://localhost:3001';
-const INTAKE_FORM_NAME = 'goal_intake_v1';
-
-type AnswerState = Record<string, string | string[]>;
 
 function HomePage(): JSX.Element {
   const [projects, setProjects] = useState<ProjectSummaryDto[]>([]);
@@ -52,7 +51,7 @@ function HomePage(): JSX.Element {
           will appear here.
         </p>
         <div className={styles['homeActions']}>
-          <Link to="/intake" className={styles['primaryLink']}>
+          <Link to="/start" className={styles['primaryLink']}>
             Start New Project
           </Link>
         </div>
@@ -96,194 +95,262 @@ function HomePage(): JSX.Element {
   );
 }
 
-function IntakePage(): JSX.Element {
-  const [questions, setQuestions] = useState<IntakeQuestionDto[]>([]);
-  const [answers, setAnswers] = useState<AnswerState>({});
-  const [title, setTitle] = useState('');
+function StartProjectPage(): JSX.Element {
+  const [goal, setGoal] = useState('');
+  const [commitment, setCommitment] = useState<ProjectCommitment | ''>('');
+  const [familiarity, setFamiliarity] = useState<ProjectFamiliarity | ''>('');
+  const [workStyle, setWorkStyle] = useState<ProjectWorkStyle | ''>('');
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<string | null>(null);
-  const [project, setProject] = useState<ProjectDto | null>(null);
+  const [submittedGoal, setSubmittedGoal] = useState<string | null>(null);
+  const [intakeForm, setIntakeForm] = useState<FormDefinition | null>(null);
+  const [focusQuestions, setFocusQuestions] =
+    useState<FocusQuestionsDefinition | null>(null);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const isReadyToSubmit = useMemo(
+    () =>
+      Boolean(
+        goal.trim() &&
+          commitment &&
+          familiarity &&
+          workStyle &&
+          intakeForm?.questions.length,
+      ),
+    [goal, commitment, familiarity, workStyle, intakeForm],
+  );
 
   useEffect(() => {
-    const loadQuestions = async () => {
+    const loadQuestions = async (): Promise<void> => {
+      setFetchError(null);
       try {
-        const res = await fetch(`${API_BASE}/intake-forms/${INTAKE_FORM_NAME}`);
-        if (!res.ok) throw new Error('Failed to load questions');
-        const data = (await res.json()) as {
-          form: { questions: IntakeQuestionDto[] };
-        };
-        setQuestions(data.form.questions);
+        const res = await fetch(`${API_BASE}/project-intake/questions`);
+        if (!res.ok) {
+          throw new Error(`Failed to load intake questions: ${res.status}`);
+        }
+        const data = (await res.json()) as { form: FormDefinition };
+        setIntakeForm(data.form);
+
+        // TODO: use enum values here
+        const commitmentQuestion = data.form.questions.find(
+          (q) => q.id === 'time_commitment',
+        );
+        const familiarityQuestion = data.form.questions.find(
+          (q) => q.id === 'familiarity',
+        );
+        const workStyleQuestion = data.form.questions.find(
+          (q) => q.id === 'work_style',
+        );
+
+        setCommitment(
+          (commitmentQuestion?.options[0]?.value as ProjectCommitment | undefined) ??
+            '',
+        );
+        setFamiliarity(
+          (familiarityQuestion?.options[0]?.value as ProjectFamiliarity | undefined) ??
+            '',
+        );
+        setWorkStyle(
+          (workStyleQuestion?.options[0]?.value as ProjectWorkStyle | undefined) ?? '',
+        );
       } catch (error) {
-        console.warn('Falling back to static questions', error);
-        setStatus('Using fallback questions; API not reachable yet.');
+        setFetchError(
+          error instanceof Error
+            ? error.message
+            : 'Unable to load intake questions.',
+        );
+        setIntakeForm(null);
       }
     };
 
     void loadQuestions();
   }, []);
 
-  const responsePayload: QuestionResponseInput[] = useMemo(() => {
-    return questions.map((question) => {
-      const value = answers[question.id];
-      if (question.questionType === 'multi_select') {
-        const list = Array.isArray(value) ? (value as string[]) : [];
-        return {
-          questionId: question.id,
-          values: list.filter((value): value is string => Boolean(value)),
-        };
-      }
-
-      return {
-        questionId: question.id,
-        values: value ? [value as string] : [''],
-      };
-    });
-  }, [answers, questions]);
-
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoading(true);
     setStatus(null);
-    setProject(null);
+    setSubmittedGoal(null);
+    setFocusQuestions(null);
 
-    if (!title.trim()) {
-      setStatus('Goal title is required.');
+    const trimmed = goal.trim();
+    if (!trimmed) {
+      setStatus('Please enter your goal.');
+      setLoading(false);
+      return;
+    }
+    if (!commitment || !familiarity || !workStyle) {
+      setStatus('Please answer all intake questions.');
       setLoading(false);
       return;
     }
 
     try {
-      const res = await fetch(`${API_BASE}/projects`, {
+      setStatus('Building your context…');
+      const res = await fetch(`${API_BASE}/projects/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title: title.trim(),
-          responses: responsePayload,
+          goal: trimmed,
+          commitment,
+          familiarity,
+          workStyle,
         }),
       });
 
       if (!res.ok) {
         const message = await res.text();
-        throw new Error(message || 'Failed to save project');
+        throw new Error(message || 'Failed to start project');
       }
 
-      const saved = (await res.json()) as ProjectDto;
-      setProject(saved);
-      setStatus('Saved project and answers.');
-      setAnswers({});
-      setTitle('');
+      setSubmittedGoal(trimmed);
+      setGoal('');
+      const payload = (await res.json()) as {
+        focusQuestions: FocusQuestionsDefinition;
+      };
+      setFocusQuestions(payload.focusQuestions);
+      setStatus('Focus questions are ready below.');
     } catch (error) {
       setStatus(
         error instanceof Error
           ? error.message
-          : 'Failed to save project; check API connection.',
+          : 'Failed to start project; check API connection.',
       );
     } finally {
       setLoading(false);
     }
   };
 
-  const updateAnswer = (questionId: string, value: string | string[]): void => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
-  };
-
   return (
     <main className={styles['page']}>
       <section className={styles['panel']}>
         <header className={styles['header']}>
-          <p className={styles['eyebrow']}>Goal intake</p>
-          <h1 className={styles['title']}>Capture a goal and the context</h1>
+          <p className={styles['eyebrow']}>New project</p>
+          <h1 className={styles['title']}>Project intake</h1>
           <p className={styles['lead']}>
-            Share what you want to achieve and answer a few prompts. We&apos;ll
-            save it and draft a roadmap next.
+            Answer these to shape your plan. We&apos;ll build focus questions next.
           </p>
         </header>
 
-        <form className={styles['form']} onSubmit={submit}>
-          <label className={styles['field']}>
-            <span>Goal title</span>
-            <input
-              type="text"
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="Launch an AI guide for user goals"
-              required
-            />
-          </label>
+        {fetchError ? (
+          <p className={styles['status']}>{fetchError}</p>
+        ) : (
+          <form className={styles['form']} onSubmit={submit}>
+            <label className={styles['field']}>
+              <span>Goal</span>
+              <input
+                type="text"
+                value={goal}
+                onChange={(event) => setGoal(event.target.value)}
+                placeholder="Ship a roadmap generator MVP"
+                required
+              />
+            </label>
 
-          <div className={styles['questions']}>
-            {questions.map((question) => (
-              <div key={question.id} className={styles['questionCard']}>
-                <p className={styles['questionText']}>{question.prompt}</p>
-                {question.questionType === 'multi_select' ? (
-                  <div className={styles['options']}>
-                    {question.options.map((option) => {
-                      const selected = Array.isArray(answers[question.id])
-                        ? (answers[question.id] as string[]).includes(option)
-                        : false;
-                      return (
-                        <label key={option} className={styles['option']}>
-                          <input
-                            type="checkbox"
-                            checked={selected}
-                            onChange={(event) => {
-                              const current = Array.isArray(
-                                answers[question.id],
-                              )
-                                ? (answers[question.id] as string[])
-                                : [];
-                              const next = event.target.checked
-                                ? [...current, option]
-                                : current.filter((item) => item !== option);
-                              updateAnswer(question.id, next);
-                            }}
-                          />
-                          {option}
-                        </label>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <textarea
-                    value={answers[question.id] as string}
-                    onChange={(event) =>
-                      updateAnswer(question.id, event.target.value)
-                    }
-                    placeholder="Type your answer"
-                    rows={3}
-                  />
-                )}
-              </div>
-            ))}
-          </div>
+            <label className={styles['field']}>
+              <span>Time commitment</span>
+              <select
+                value={commitment}
+                onChange={(event) =>
+                  setCommitment(event.target.value as ProjectCommitment)
+                }
+                required
+              >
+                {intakeForm?.questions
+                  .find((q) => q.id === 'time_commitment')
+                  ?.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+              </select>
+            </label>
 
-          <button type="submit" className={styles['submit']} disabled={loading}>
-            {loading ? 'Saving…' : 'Save goal and answers'}
-          </button>
-          {status && <p className={styles['status']}>{status}</p>}
-        </form>
+            <label className={styles['field']}>
+              <span>Familiarity</span>
+              <select
+                value={familiarity}
+                onChange={(event) =>
+                  setFamiliarity(event.target.value as ProjectFamiliarity)
+                }
+                required
+              >
+                {intakeForm?.questions
+                  .find((q) => q.id === 'familiarity')
+                  ?.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <label className={styles['field']}>
+              <span>Work style</span>
+              <select
+                value={workStyle}
+                onChange={(event) =>
+                  setWorkStyle(event.target.value as ProjectWorkStyle)
+                }
+                required
+              >
+                {intakeForm?.questions
+                  .find((q) => q.id === 'work_style')
+                  ?.options.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+              </select>
+            </label>
+
+            <button
+              type="submit"
+              className={styles['submit']}
+              disabled={loading || !isReadyToSubmit}
+            >
+              {loading ? 'Building your context…' : 'Start project'}
+            </button>
+            {status && <p className={styles['status']}>{status}</p>}
+          </form>
+        )}
       </section>
 
-      {project && (
+      {submittedGoal && (
         <section className={styles['result']}>
-          <h2>Saved project</h2>
-          <p className={styles['projectTitle']}>{project.title}</p>
+          <h2>Submitted goal</h2>
+          <p className={styles['projectTitle']}>{submittedGoal}</p>
           <p className={styles['projectMeta']}>
-            Status: {project.status} · Responses captured:{' '}
-            {project.responses.length}
+            Building your context…
           </p>
-          <ul className={styles['detailList']}>
-            {project.responses.map((response) => (
-              <li key={response.answer.questionId}>
-                <strong>{response.question.prompt}</strong>
-                <div>
-                  {response.answer.values.length > 0
-                    ? response.answer.values.join(', ')
-                    : 'No answer yet'}
-                </div>
+        </section>
+      )}
+
+      {focusQuestions && (
+        <section className={styles['panel']}>
+          <header className={styles['header']}>
+            <p className={styles['eyebrow']}>Focus Questions</p>
+            <h2 className={styles['title']}>Clarify your project</h2>
+            <p className={styles['lead']}>
+              Answer these next to refine your plan.
+            </p>
+          </header>
+          <ol className={styles['detailList']}>
+            {focusQuestions.questions.map((question) => (
+              <li key={question.id}>
+                <strong>{question.prompt}</strong>
+                {question.options.length > 0 && (
+                  <div>
+                    {question.options.map((option) => (
+                      <span key={option.value} className={styles['optionBadge']}>
+                        {option.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </li>
             ))}
-          </ul>
+          </ol>
         </section>
       )}
     </main>
@@ -393,7 +460,7 @@ export function App(): JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/intake" element={<IntakePage />} />
+      <Route path="/start" element={<StartProjectPage />} />
       <Route path="/projects/:projectId" element={<StoryDetailsPage />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
