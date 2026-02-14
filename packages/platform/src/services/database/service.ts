@@ -173,8 +173,6 @@ class PrismaDatabaseService implements DatabaseService {
         summary: milestone.summary,
         position: milestone.position,
         status: MilestoneStatus.locked,
-        // context: milestone.context,
-        // metadata: milestone.metadata,
       })),
     });
   }

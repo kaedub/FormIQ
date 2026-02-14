@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import type {
+  FocusQuestionsContextInput,
+  MilestoneDto,
+  ProjectDto,
+} from '@formiq/shared';
 import {
   PROJECT_COMMITMENT_VALUES,
   PROJECT_FAMILIARITY_VALUES,
@@ -58,7 +63,7 @@ export const projectSchema = z
     userId: nonEmptyString,
     title: nonEmptyString,
     status: z.enum(PROJECT_STATUS_VALUES),
-    generatedAt: z.string().optional(),
+    generatedAt: z.string().nullable(),
     createdAt: z.string(),
     updatedAt: z.string(),
     responses: z.array(projectResponseSchema),
@@ -86,9 +91,7 @@ export const milestoneSchema = z
     summary: nonEmptyString,
     position: z.number().int().nonnegative(),
     status: z.enum(MILESTONE_STATUS_VALUES),
-    context: z.unknown().optional(),
-    generatedAt: z.string().optional(),
-    metadata: z.unknown().optional(),
+    generatedAt: z.string(),
   })
   .strict();
 

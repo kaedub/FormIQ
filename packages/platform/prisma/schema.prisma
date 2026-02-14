@@ -111,11 +111,9 @@ model Milestone {
   id               String            @id @default(uuid())
   title            String
   summary          String
-  context          Json?
   position         Int
   status           MilestoneStatus   @default(locked)
-  generatedAt      DateTime?         @default(now())
-  metadata         Json?
+  generatedAt      DateTime          @default(now())
   projectId        String
   project          Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
   tasks            Task[]
@@ -129,9 +127,8 @@ model Task {
   description      String
   position         Int
   status           TaskStatus        @default(locked)
-  generatedAt      DateTime?
+  generatedAt      DateTime          @default(now())
   completedAt      DateTime?
-  metadata         Json?
   milestone        Milestone         @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
   promptExecutions PromptExecution[]
 }

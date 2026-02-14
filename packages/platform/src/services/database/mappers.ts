@@ -19,34 +19,30 @@ export const mapProjectDto = (project: ProjectWithResponses): ProjectDto => {
     userId: project.userId,
     title: project.title,
     status: project.status,
+    generatedAt: project.generatedAt ? project.generatedAt.toISOString() : null,
     createdAt: project.createdAt.toISOString(),
     updatedAt: project.updatedAt.toISOString(),
     responses: [],
   };
-  if (project.generatedAt) {
-    dto.generatedAt = project.generatedAt.toISOString();
-  }
   return dto;
 };
 
 export const mapMilestoneDto = (milestone: MilestoneModel): MilestoneDto => {
+  const generatedAt = milestone.generatedAt ?? new Date();
   const dto: MilestoneDto = {
     id: milestone.id,
     projectId: milestone.projectId,
     title: milestone.title,
     summary: milestone.summary,
-    context: milestone.context ?? undefined,
     position: milestone.position,
     status: milestone.status,
-    metadata: milestone.metadata ?? undefined,
+    generatedAt: generatedAt.toISOString(),
   };
-  if (milestone.generatedAt) {
-    dto.generatedAt = milestone.generatedAt.toISOString();
-  }
   return dto;
 };
 
 export const mapTaskDto = (task: TaskModel): TaskDto => {
+  const generatedAt = task.generatedAt ?? new Date();
   const dto: TaskDto = {
     id: task.id,
     milestoneId: task.milestoneId,
@@ -54,14 +50,9 @@ export const mapTaskDto = (task: TaskModel): TaskDto => {
     description: task.description,
     position: task.position,
     status: task.status,
-    metadata: task.metadata ?? undefined,
+    generatedAt: generatedAt.toISOString(),
+    completedAt: task.completedAt ? task.completedAt.toISOString() : null,
   };
-  if (task.generatedAt) {
-    dto.generatedAt = task.generatedAt.toISOString();
-  }
-  if (task.completedAt) {
-    dto.completedAt = task.completedAt.toISOString();
-  }
   return dto;
 };
 
