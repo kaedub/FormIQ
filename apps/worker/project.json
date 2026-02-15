@@ -13,7 +13,7 @@
     "run": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn tsx apps/worker/src/client.ts"
+        "command": "yarn tsx apps/worker/src/worker.ts"
       }
     }
   },
