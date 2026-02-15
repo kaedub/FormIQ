@@ -19,8 +19,5 @@
     "@formiq/platform": "workspace:*",
     "@formiq/shared": "workspace:*",
     "zod": "^3.24.1"
-  },
-  "devDependencies": {
-    "typescript": "^5.9.3"
   }
 }

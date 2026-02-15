@@ -15,9 +15,6 @@
   "scripts": {
     "build": "tsc -b"
   },
-  "devDependencies": {
-    "typescript": "^5.9.3"
-  },
   "dependencies": {
     "@temporalio/workflow": "^1.14.1"
   }

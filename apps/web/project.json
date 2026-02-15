@@ -8,14 +8,16 @@
     "build": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn workspace @formiq/web build"
+        "command": "yarn vite build",
+        "cwd": "apps/web"
       },
       "outputs": ["{projectRoot}/dist"]
     },
     "serve": {
       "executor": "nx:run-commands",
       "options": {
-        "command": "yarn workspace @formiq/web dev -- --host 0.0.0.0 --port 4200"
+        "command": "yarn vite dev --host 0.0.0.0 --port 4200",
+        "cwd": "apps/web"
       }
     },
     "lint": {

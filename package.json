@@ -3,7 +3,6 @@
   "name": "formiq",
   "private": true,
   "workspaces": [
-    "apps/*",
     "packages/platform",
     "packages/shared",
     "packages/workflows",
@@ -40,6 +39,8 @@
     "@swc/helpers": "~0.5.11",
     "@testing-library/dom": "10.4.0",
     "@testing-library/react": "16.3.0",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
     "@types/node": "20.19.9",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -64,6 +65,11 @@
     "vitest": "^4.0.0"
   },
   "dependencies": {
+    "@temporalio/client": "^1.14.1",
+    "@temporalio/worker": "^1.14.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.19.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "6.29.0"

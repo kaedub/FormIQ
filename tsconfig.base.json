@@ -22,6 +22,12 @@
     "module": "esnext",
     "target": "ES2023",
     "skipLibCheck": true,
-    "baseUrl": "."
+    "baseUrl": ".",
+    "paths": {
+      "@formiq/shared": ["packages/shared/src/index.ts"],
+      "@formiq/platform": ["packages/platform/src/index.ts"],
+      "@formiq/workflows": ["packages/workflows/src/index.ts"],
+      "@formiq/activities": ["packages/activities/src/index.ts"]
+    }
   }
 }
