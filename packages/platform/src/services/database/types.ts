@@ -5,6 +5,7 @@ import type {
   CreateProjectMilestonesInput,
   FormRecordDto,
   CreateFormRecordInput,
+  ReplaceFocusFormItemsInput,
   FormDefinition,
   ProjectContextDto,
   ProjectDto,
@@ -20,9 +21,9 @@ export interface DatabaseService {
   getProject(input: GetProjectInput): Promise<ProjectDto | null>;
   getProjectDetails(input: GetProjectInput): Promise<ProjectContextDto>;
   getProjectsByUserId(userId: string): Promise<ProjectSummaryDto[]>;
-  getProjectIntakeForm(): Promise<FormDefinition>;
   getFocusFormByName(name: string): Promise<FormRecordDto | null>;
   createFocusForm(input: CreateFormRecordInput): Promise<FormRecordDto>;
+  replaceFocusFormItems(input: ReplaceFocusFormItemsInput): Promise<void>;
   createProject(input: CreateProjectInput): Promise<ProjectDto>;
   createProjectMilestones(input: CreateProjectMilestonesInput): Promise<void>;
   createMilestoneTasks(input: CreateMilestoneTasksInput): Promise<void>;

@@ -11,6 +11,7 @@ import type {
   GetProjectInput,
   FormRecordDto,
   CreateFormRecordInput,
+  ReplaceFocusFormItemsInput,
   FormDefinition,
 } from '@formiq/shared';
 import {
@@ -22,10 +23,6 @@ import {
 
 class PrismaDatabaseService implements DatabaseService {
   constructor(private readonly db: PrismaClient) {}
-
-  getProjectIntakeForm(): Promise<FormDefinition> {
-    return Promise.resolve(PROJECT_INTAKE_FORM);
-  }
 
   async getProject({
     projectId,
@@ -109,18 +106,59 @@ class PrismaDatabaseService implements DatabaseService {
   }
 
   async createFocusForm(input: CreateFormRecordInput): Promise<FormRecordDto> {
-    const { name, projectId, kind } = input;
+    const { name, projectId, userId, kind, items } = input;
     if (kind !== 'focus_questions') {
       throw new Error('Only focus_questions forms can be created');
     }
-    const created = await this.db.focusForm.create({
-      data: {
-        name,
-        projectId,
-      },
+
+    const created = await this.db.$transaction(async (tx) => {
+      const form = await tx.focusForm.create({
+        data: {
+          name,
+          projectId,
+        },
+      });
+
+      if (items.length > 0) {
+        await tx.focusItem.createMany({
+          data: items.map((item) => ({
+            formId: form.id,
+            userId,
+            question: item.question,
+            questionType: item.questionType,
+            options: item.options,
+            position: item.position,
+          })),
+        });
+      }
+
+      return form;
     });
 
     return mapFormRecordDto(created);
+  }
+
+  async replaceFocusFormItems(
+    input: ReplaceFocusFormItemsInput,
+  ): Promise<void> {
+    const { formId, userId, items } = input;
+
+    await this.db.$transaction(async (tx) => {
+      await tx.focusItem.deleteMany({
+        where: { formId },
+      });
+
+      await tx.focusItem.createMany({
+        data: items.map((item) => ({
+          formId,
+          userId,
+          question: item.question,
+          questionType: item.questionType,
+          options: item.options,
+          position: item.position,
+        })),
+      });
+    });
   }
 
   async createProject(input: CreateProjectInput): Promise<ProjectDto> {

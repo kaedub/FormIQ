@@ -4,6 +4,7 @@ import {
   parseCreateFormRecordInput,
   parseCreateMilestoneTasksInput,
   parseCreateProjectMilestonesInput,
+  parseReplaceFocusFormItemsInput,
   parseFormRecord,
   parseGetFocusFormByNameInput,
 } from './types.js';
@@ -24,7 +25,6 @@ export const createFocusForm = async (
 ): Promise<FormRecordDto> => {
   const parsedInput = parseCreateFormRecordInput(input);
   const formRecord = await databaseService.createFocusForm(parsedInput);
-
   return parseFormRecord(formRecord);
 };
 
@@ -33,6 +33,11 @@ export const createProjectMilestones = async (
 ): Promise<void> => {
   const parsedInput = parseCreateProjectMilestonesInput(input);
   await databaseService.createProjectMilestones(parsedInput);
+};
+
+export const replaceFocusFormItems = async (input: unknown): Promise<void> => {
+  const parsedInput = parseReplaceFocusFormItemsInput(input);
+  await databaseService.replaceFocusFormItems(parsedInput);
 };
 
 export const createMilestoneTasks = async (input: unknown): Promise<void> => {

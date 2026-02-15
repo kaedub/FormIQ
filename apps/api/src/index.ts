@@ -7,6 +7,7 @@ import {
   getPrismaClient,
 } from '@formiq/platform';
 import {
+  PROJECT_INTAKE_FORM,
   TEST_USER_ID,
   isProjectCommitment,
   isProjectFamiliarity,
@@ -61,7 +62,7 @@ app.get('/health', (_req, res) => {
 
 app.get('/project-intake/questions', async (_req, res) => {
   try {
-    const form = await db.getProjectIntakeForm();
+    const form = PROJECT_INTAKE_FORM;
     return res.json({ form });
   } catch (error) {
     console.error('Failed to fetch project intake questions', error);
@@ -121,12 +122,6 @@ app.post('/projects/start', async (req, res) => {
     responses: [],
   });
 
-  const focusForm = await db.createFocusForm({
-    name: `focus-questions-${Date.now()}`,
-    projectId: project.id,
-    kind: 'focus_questions',
-  });
-
   const focusQuestions = await ai.generateFocusQuestions({
     goal,
     commitment,
@@ -134,18 +129,18 @@ app.post('/projects/start', async (req, res) => {
     workStyle,
   });
 
-  if (focusQuestions.questions.length > 0) {
-    await prisma.focusItem.createMany({
-      data: focusQuestions.questions.map((question) => ({
-        formId: focusForm.id,
-        userId: TEST_USER_ID,
-        question: question.prompt,
-        options: question.options,
-        questionType: question.questionType,
-        position: question.position,
-      })),
-    });
-  }
+  await db.createFocusForm({
+    name: `focus-questions-${Date.now()}`,
+    projectId: project.id,
+    userId: TEST_USER_ID,
+    kind: 'focus_questions',
+    items: focusQuestions.questions.map((question) => ({
+      question: question.prompt,
+      questionType: question.questionType,
+      options: question.options,
+      position: question.position,
+    })),
+  });
 
   return res.json({ goal, focusQuestions, status: 'ok' });
 });

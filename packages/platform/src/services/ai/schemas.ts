@@ -82,14 +82,3 @@ export const milestoneTaskContextSchema = z
     milestone: milestoneContextSchema,
   })
   .strict();
-
-// export const FORM_DEFINITION_JSON_SCHEMA: JsonSchema = toJsonSchema(intakeFormSchema, 'intake_form');
-
-// export const PROJECT_CONTEXT_JSON_SCHEMA: JsonSchema = toJsonSchema(
-//   projectContextSchema,
-//   'project_context',
-// );
-
-// export const PROJECT_OUTLINE_JSON_SCHEMA: JsonSchema = toJsonSchema(projectOutlineSchema, 'project_outline');
-
-// export const TASK_SCHEDULE_JSON_SCHEMA: JsonSchema = toJsonSchema(taskScheduleSchema, 'task_schedule');

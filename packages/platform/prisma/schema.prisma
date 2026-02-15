@@ -101,7 +101,7 @@ model Project {
   updatedAt        DateTime          @updatedAt
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   generatedAt      DateTime?
-  intakeForm       FocusForm?
+  focusForm        FocusForm?
   milestones       Milestone[]
   promptExecutions PromptExecution[]
   events           ProjectEvent[]

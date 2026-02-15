@@ -142,7 +142,7 @@ describe('PrismaDatabaseService integration', () => {
     });
   });
 
-  it('creates a focus questions form without items and fetches it by name', async () => {
+  it('creates a focus form with items and fetches it by name', async () => {
     const formName = `intake-${randomUUID()}`;
     const user = await createTestUser(prisma);
     const project = await service.createProject(buildProjectInput(user.id));
@@ -150,7 +150,22 @@ describe('PrismaDatabaseService integration', () => {
     const created = await service.createFocusForm({
       name: formName,
       projectId: project.id,
+      userId: user.id,
       kind: 'focus_questions',
+      items: [
+        {
+          question: 'What is your goal?',
+          questionType: 'free_text',
+          options: [],
+          position: 0,
+        },
+        {
+          question: 'Pick a focus area',
+          questionType: 'single_select',
+          options: ['frontend', 'backend'],
+          position: 1,
+        },
+      ],
     });
 
     expect(created.name).toBe(formName);
@@ -159,19 +174,93 @@ describe('PrismaDatabaseService integration', () => {
     const fetched = await service.getFocusFormByName(formName);
     expect(fetched?.id).toBe(created.id);
     expect(fetched?.projectId).toBe(project.id);
+
+    const items = await prisma.focusItem.findMany({
+      where: { formId: created.id },
+      orderBy: { position: 'asc' },
+    });
+    expect(items).toHaveLength(2);
+    expect(items[0]?.question).toBe('What is your goal?');
+    expect(items[0]?.answer).toBeNull();
+    expect(items[0]?.answeredAt).toBeNull();
+    expect(items[1]?.question).toBe('Pick a focus area');
+    expect(items[1]?.options).toEqual(['frontend', 'backend']);
+  });
+
+  it('creates a focus form with an empty items array', async () => {
+    const formName = `empty-${randomUUID()}`;
+    const user = await createTestUser(prisma);
+    const project = await service.createProject(buildProjectInput(user.id));
+
+    const created = await service.createFocusForm({
+      name: formName,
+      projectId: project.id,
+      userId: user.id,
+      kind: 'focus_questions',
+      items: [],
+    });
+
+    expect(created.name).toBe(formName);
+
+    const items = await prisma.focusItem.findMany({
+      where: { formId: created.id },
+    });
+    expect(items).toHaveLength(0);
+  });
+
+  it('replaces focus form items with new ones', async () => {
+    const formName = `replace-${randomUUID()}`;
+    const user = await createTestUser(prisma);
+    const project = await service.createProject(buildProjectInput(user.id));
+
+    const form = await service.createFocusForm({
+      name: formName,
+      projectId: project.id,
+      userId: user.id,
+      kind: 'focus_questions',
+      items: [
+        {
+          question: 'Original question',
+          questionType: 'free_text',
+          options: [],
+          position: 0,
+        },
+      ],
+    });
+
+    await service.replaceFocusFormItems({
+      formId: form.id,
+      userId: user.id,
+      items: [
+        {
+          question: 'Replaced question 1',
+          questionType: 'single_select',
+          options: ['a', 'b'],
+          position: 0,
+        },
+        {
+          question: 'Replaced question 2',
+          questionType: 'free_text',
+          options: [],
+          position: 1,
+        },
+      ],
+    });
+
+    const items = await prisma.focusItem.findMany({
+      where: { formId: form.id },
+      orderBy: { position: 'asc' },
+    });
+    expect(items).toHaveLength(2);
+    expect(items[0]?.question).toBe('Replaced question 1');
+    expect(items[0]?.options).toEqual(['a', 'b']);
+    expect(items[0]?.answer).toBeNull();
+    expect(items[1]?.question).toBe('Replaced question 2');
   });
 
   it('returns null when fetching missing focus questions', async () => {
     const result = await service.getFocusFormByName('missing_intake_form');
 
     expect(result).toBeNull();
-  });
-
-  it('returns the static project intake form', async () => {
-    const form = await service.getProjectIntakeForm();
-
-    expect(form.questions).toHaveLength(4);
-    expect(form.questions[0]?.id).toBe('goal');
-    expect(form.questions[0]?.questionType).toBe('free_text');
   });
 });

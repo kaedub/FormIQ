@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { FORM_RECORD_KIND_VALUES } from '@formiq/shared';
+import { FORM_RECORD_KIND_VALUES, QUESTION_TYPE_VALUES } from '@formiq/shared';
 
 export const idSchema = z.string().min(1, 'id is required');
 export const userIdSchema = z.string().min(1, 'userId is required');
@@ -7,6 +7,13 @@ export const projectIdSchema = z.string().min(1, 'projectId is required');
 export const milestoneIdSchema = z.string().min(1, 'milestoneId is required');
 
 export const formRecordKindSchema = z.enum(FORM_RECORD_KIND_VALUES);
+
+export const focusItemInputSchema = z.object({
+  question: z.string().min(1, 'question is required'),
+  questionType: z.enum(QUESTION_TYPE_VALUES),
+  options: z.array(z.string()),
+  position: z.number().int().nonnegative(),
+});
 
 export const formRecordSchema = z.object({
   id: idSchema,
@@ -23,12 +30,20 @@ export const createFormRecordInputSchema = z
   .object({
     name: z.string().min(1, 'name is required'),
     projectId: projectIdSchema,
+    userId: userIdSchema,
     kind: formRecordKindSchema,
+    items: z.array(focusItemInputSchema),
   })
   .refine(
     (input) => input.kind === 'focus_questions',
     'Only focus_questions forms can be created via this activity',
   );
+
+export const replaceFocusFormItemsInputSchema = z.object({
+  formId: idSchema,
+  userId: userIdSchema,
+  items: z.array(focusItemInputSchema).min(1, 'at least one item'),
+});
 
 export const createProjectMilestonesInputSchema = z.object({
   userId: userIdSchema,

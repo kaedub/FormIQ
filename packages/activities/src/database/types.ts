@@ -2,6 +2,7 @@ import type {
   CreateFormRecordInput,
   CreateMilestoneTasksInput,
   CreateProjectMilestonesInput,
+  ReplaceFocusFormItemsInput,
   FormRecordDto,
 } from '@formiq/shared';
 import type { z } from 'zod';
@@ -9,6 +10,7 @@ import {
   createFormRecordInputSchema,
   createMilestoneTasksInputSchema,
   createProjectMilestonesInputSchema,
+  replaceFocusFormItemsInputSchema,
   formRecordSchema,
   getFocusFormByNameInputSchema,
 } from './schemas.js';
@@ -39,6 +41,10 @@ export const parseCreateMilestoneTasksInput = (
   input: unknown,
 ): CreateMilestoneTasksInputValidated =>
   createMilestoneTasksInputSchema.parse(input);
+
+export const parseReplaceFocusFormItemsInput = (
+  input: unknown,
+): ReplaceFocusFormItemsInput => replaceFocusFormItemsInputSchema.parse(input);
 
 export const parseFormRecord = (value: unknown): FocusFormRecord =>
   formRecordSchema.parse(value);

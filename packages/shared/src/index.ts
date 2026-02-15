@@ -214,10 +214,26 @@ export const FORM_RECORD_KIND_VALUES = [
   'focus_questions',
 ] as const satisfies readonly [string, ...string[]];
 
+export interface CreateFocusItemInput {
+  question: string;
+  questionType: QuestionType;
+  options: string[];
+  position: number;
+}
+
 export interface CreateFormRecordInput {
   name: string;
   projectId: string;
+  userId: string;
   kind: FormRecordDto['kind'];
+  items: CreateFocusItemInput[];
+}
+
+export interface ReplaceFocusFormItemsInput {
+  // TODO: Should this just be projectId?
+  formId: string;
+  userId: string;
+  items: CreateFocusItemInput[];
 }
 
 export interface MilestoneDto {
